@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FORGE — Elite Data Science Training System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Bebas+Neue&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{
+  --ink:#06060a;--ink2:#0d0d16;--ink3:#13131f;--ink4:#1a1a2a;--ink5:#222238;
+  --border:#21213a;--border2:#2d2d50;
+  --acid:#c8ff00;--hot:#ff3d00;--ice:#00cfff;--violet:#7c3aed;--gold:#ffc200;--rose:#ff2d6b;
+  --t0:#f0f0ff;--t1:#c0c0e0;--t2:#7070a0;--t3:#404060;
+  --fh:'Bebas Neue',sans-serif;--fb:'Instrument Sans',sans-serif;--fm:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--t0);font-family:var(--fb);font-size:15px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* SCAN-LINE TEXTURE */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.025;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(200,255,0,.5) 2px,rgba(200,255,0,.5) 3px);
+  background-size:100% 3px}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 15% 10%,rgba(124,58,237,.07) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 80%,rgba(200,255,0,.05) 0%,transparent 55%)}
+
+::-webkit-scrollbar{width:3px;background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+h1,h2,h3,h4{font-family:var(--fh);letter-spacing:1px;line-height:1.1}
+button{cursor:pointer;border:none;background:none;color:inherit;font-family:var(--fb)}
+a{color:var(--ice);text-decoration:none}
+
+/* ── LAYOUT ── */
+.shell{display:flex;min-height:100vh;position:relative;z-index:1}
+.rail{width:60px;position:fixed;top:0;left:0;bottom:0;z-index:300;background:rgba(6,6,10,.98);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:2px}
+.brand{width:36px;height:36px;margin-bottom:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.brand-mark{width:28px;height:28px;position:relative}
+.brand-mark::before{content:'';position:absolute;inset:0;border:2px solid var(--acid);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:hexSpin 12s linear infinite}
+.brand-mark::after{content:'F';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:14px;color:var(--acid);letter-spacing:0}
+@keyframes hexSpin{to{transform:rotate(360deg)}}
+.rail-btn{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:.2s;color:var(--t3);position:relative}
+.rail-btn:hover{background:var(--ink3);color:var(--t2)}
+.rail-btn.on{background:rgba(200,255,0,.08);color:var(--acid);border:1px solid rgba(200,255,0,.2)}
+.rail-btn .ri{font-size:16px}
+.rail-btn .rl{font-size:7px;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px}
+.rail-tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:var(--ink3);border:1px solid var(--border2);padding:4px 10px;border-radius:5px;font-size:11px;font-family:var(--fm);white-space:nowrap;opacity:0;transition:.15s;pointer-events:none;z-index:400}
+.rail-btn:hover .rail-tip{opacity:1}
+.rail-div{width:28px;height:1px;background:var(--border);margin:6px 0}
+.main{margin-left:60px;flex:1;min-height:100vh}
+.topbar{position:fixed;top:0;left:60px;right:0;z-index:200;height:52px;background:rgba(6,6,10,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 28px;gap:16px}
+.forge-tag{font-family:var(--fh);font-size:22px;letter-spacing:3px;color:var(--acid);text-shadow:0 0 20px rgba(200,255,0,.4)}
+.topbar-crumb{font-family:var(--fm);font-size:10px;color:var(--t3);display:flex;align-items:center;gap:8px}
+.topbar-crumb span{color:var(--t2)}
+.tb-sep{flex:1}
+.perf-chip{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--ink3);border:1px solid var(--border2);border-radius:6px;font-family:var(--fm);font-size:10px}
+.perf-val{color:var(--acid);font-weight:700}
+.page{padding:72px 32px 56px;max-width:1400px;margin:0 auto}
+.pg-enter{animation:pgIn .22s ease}
+@keyframes pgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARD SYSTEM ── */
+.box{background:var(--ink2);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:.2s}
+.box:hover{border-color:var(--border2)}
+.box-acid:hover{border-color:rgba(200,255,0,.3);box-shadow:0 0 24px rgba(200,255,0,.08)}
+.box-ice:hover{border-color:rgba(0,207,255,.3);box-shadow:0 0 24px rgba(0,207,255,.08)}
+.box-hot:hover{border-color:rgba(255,61,0,.3);box-shadow:0 0 24px rgba(255,61,0,.08)}
+.box-violet:hover{border-color:rgba(124,58,237,.3);box-shadow:0 0 24px rgba(124,58,237,.08)}
+
+/* ── BTN SYSTEM ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;border:1px solid;transition:.2s;white-space:nowrap;letter-spacing:.3px;background:transparent}
+.btn:hover{transform:translateY(-1px)}
+.btn-acid{background:var(--acid);border-color:var(--acid);color:#000;font-weight:800}
+.btn-acid:hover{box-shadow:0 0 24px rgba(200,255,0,.5)}
+.btn-ice{background:rgba(0,207,255,.1);border-color:rgba(0,207,255,.35);color:var(--ice)}
+.btn-ice:hover{background:rgba(0,207,255,.18);box-shadow:0 0 20px rgba(0,207,255,.25)}
+.btn-hot{background:rgba(255,61,0,.1);border-color:rgba(255,61,0,.35);color:var(--hot)}
+.btn-hot:hover{background:rgba(255,61,0,.18)}
+.btn-violet{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.35);color:#a78bfa}
+.btn-violet:hover{background:rgba(124,58,237,.18)}
+.btn-ghost{border-color:var(--border2);color:var(--t2)}
+.btn-ghost:hover{border-color:var(--t3);color:var(--t1)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-lg{padding:13px 30px;font-size:15px;font-weight:700}
+
+/* ── BADGES ── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border:1px solid}
+.tag-acid{background:rgba(200,255,0,.1);color:var(--acid);border-color:rgba(200,255,0,.3)}
+.tag-ice{background:rgba(0,207,255,.1);color:var(--ice);border-color:rgba(0,207,255,.3)}
+.tag-hot{background:rgba(255,61,0,.1);color:var(--hot);border-color:rgba(255,61,0,.3)}
+.tag-violet{background:rgba(124,58,237,.1);color:#a78bfa;border-color:rgba(124,58,237,.3)}
+.tag-gold{background:rgba(255,194,0,.1);color:var(--gold);border-color:rgba(255,194,0,.3)}
+.tag-rose{background:rgba(255,45,107,.1);color:var(--rose);border-color:rgba(255,45,107,.3)}
+
+/* ── TYPOGRAPHY ── */
+.hero-title{font-family:var(--fh);font-size:clamp(52px,8vw,96px);letter-spacing:2px;line-height:.95}
+.sec-label{font-family:var(--fm);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.sec-label::before{content:'';width:20px;height:1px;background:var(--acid)}
+.sec-h{font-family:var(--fh);font-size:clamp(24px,3.5vw,36px);letter-spacing:1px}
+.mono{font-family:var(--fm)}
+
+/* ── PROGRESS ── */
+.pb{height:3px;background:var(--ink4);border-radius:2px;overflow:hidden}
+.pb-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.pb-acid{background:var(--acid)}
+.pb-ice{background:linear-gradient(90deg,var(--ice),var(--violet))}
+.pb-hot{background:linear-gradient(90deg,var(--hot),var(--gold))}
+
+/* ── STAT CARDS ── */
+.kpi{padding:20px;border-radius:10px;background:var(--ink2);border:1px solid var(--border);position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.kpi-a::after{background:var(--acid);box-shadow:0 0 8px var(--acid)}
+.kpi-i::after{background:var(--ice);box-shadow:0 0 8px var(--ice)}
+.kpi-h::after{background:var(--hot);box-shadow:0 0 8px var(--hot)}
+.kpi-v::after{background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.kpi-num{font-family:var(--fh);font-size:40px;line-height:1;letter-spacing:1px}
+.kpi-lbl{font-family:var(--fm);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-top:6px}
+
+/* ── QUIZ ROW ── */
+.qrow{padding:14px 18px;background:var(--ink2);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:.15s;margin-bottom:6px}
+.qrow:hover{border-color:var(--border2);transform:translateX(3px)}
+.qrow.solved{border-left:2px solid var(--acid)}
+.qrow.failed{border-left:2px solid var(--hot)}
+.qnum{font-family:var(--fm);font-size:9px;color:var(--t3);min-width:30px}
+.qtit{flex:1;font-size:13px;font-weight:500;color:var(--t1)}
+.diff-e{color:var(--acid)}.diff-m{color:var(--gold)}.diff-h{color:var(--hot)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;animation:fadeIn .18s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.mbox{background:var(--ink2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:820px;margin:auto;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.95)}
+.mhead{padding:20px 26px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.mbody{padding:26px;max-height:80vh;overflow-y:auto}
+.mbody::-webkit-scrollbar{width:3px}.mbody::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── QUIZ OPTIONS ── */
+.qopt{padding:13px 16px;border:1px solid var(--border);border-radius:7px;background:var(--ink3);cursor:pointer;display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;color:var(--t1);font-family:var(--fb);font-size:13px;margin-bottom:8px;transition:.15s}
+.qopt:hover:not(.dis){border-color:rgba(0,207,255,.4);background:rgba(0,207,255,.05)}
+.qopt.ok{border-color:rgba(200,255,0,.5);background:rgba(200,255,0,.07);color:var(--acid)}
+.qopt.no{border-color:rgba(255,61,0,.5);background:rgba(255,61,0,.07);color:var(--hot)}
+.qopt.dis{cursor:default}
+.okey{width:22px;height:22px;border-radius:4px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:10px;color:var(--t3);flex-shrink:0}
+.qopt.ok .okey{border-color:var(--acid);color:var(--acid);background:rgba(200,255,0,.15)}
+.qopt.no .okey{border-color:var(--hot);color:var(--hot);background:rgba(255,61,0,.15)}
+.qfb{margin-top:16px;padding:16px 18px;border-radius:8px;animation:slUp .25s}
+@keyframes slUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.qfb-ok{background:rgba(200,255,0,.06);border:1px solid rgba(200,255,0,.2)}
+.qfb-no{background:rgba(255,61,0,.06);border:1px solid rgba(255,61,0,.2)}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g-proj{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.g-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;padding:3px;background:var(--ink3);border-radius:8px;border:1px solid var(--border)}
+.tab{padding:7px 16px;border-radius:6px;font-family:var(--fm);font-size:10px;letter-spacing:.8px;cursor:pointer;transition:.2s;color:var(--t3);text-transform:uppercase;white-space:nowrap}
+.tab.on{background:var(--ink4);color:var(--t0);border:1px solid var(--border2)}
+.tab:hover:not(.on){color:var(--t2)}
+
+/* ── PROJECT CARD ── */
+.pcard{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--ink2);transition:.25s;cursor:pointer}
+.pcard:hover{transform:translateY(-4px);border-color:var(--border2)}
+.pcard-banner{height:6px}
+.pcard-body{padding:22px}
+.pcard-foot{padding:14px 22px;border-top:1px solid var(--border);background:var(--ink);display:flex;align-items:center;justify-content:space-between}
+
+/* ── SCENARIO MODE ── */
+.scenario-box{padding:20px;background:var(--ink);border:1px solid var(--border);border-left:3px solid var(--ice);border-radius:8px;font-family:var(--fm);font-size:12px;line-height:1.8;color:var(--t1)}
+.scenario-lbl{font-size:9px;color:var(--ice);letter-spacing:2px;margin-bottom:8px}
+
+/* ── INTERVIEW TIMER ── */
+.big-timer{font-family:var(--fh);font-size:72px;letter-spacing:4px;color:var(--acid);text-shadow:0 0 30px rgba(200,255,0,.4)}
+.big-timer.warn{color:var(--hot);text-shadow:0 0 30px rgba(255,61,0,.5)}
+
+/* ── SKILL BARS ── */
+.sk-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sk-name{font-family:var(--fm);font-size:10px;color:var(--t2);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
+.sk-bar{flex:1;height:5px;background:var(--ink4);border-radius:3px;overflow:hidden}
+.sk-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.sk-pct{font-family:var(--fm);font-size:10px;color:var(--t3);width:28px;text-align:right;flex-shrink:0}
+
+/* ── CODE ── */
+.code{background:var(--ink);border:1px solid var(--border);border-radius:7px;padding:14px 16px;font-family:var(--fm);font-size:12px;color:var(--acid);line-height:1.8;overflow-x:auto;white-space:pre}
+.code .kw{color:var(--violet)}.code .fn{color:var(--ice)}.code .cm{color:var(--t3)}.code .str{color:var(--gold)}
+
+/* ── ALERTS ── */
+.alert{padding:12px 16px;border-radius:7px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.alert-acid{background:rgba(200,255,0,.05);border:1px solid rgba(200,255,0,.2)}
+.alert-hot{background:rgba(255,61,0,.05);border:1px solid rgba(255,61,0,.2)}
+.alert-ice{background:rgba(0,207,255,.05);border:1px solid rgba(0,207,255,.2)}
+.ai{font-size:14px;flex-shrink:0;margin-top:1px}
+
+/* ── CHECKLIST ── */
+.cl-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.cl-item:last-child{border-bottom:none}
+.cl-box{width:20px;height:20px;border-radius:5px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.2s;font-size:10px;margin-top:1px}
+.cl-box:hover{border-color:var(--acid)}
+.cl-box.ck{background:var(--acid);border-color:var(--acid);color:#000;font-weight:800}
+.cl-lbl{font-size:13px;color:var(--t1)}
+.cl-lbl.dk{text-decoration:line-through;color:var(--t3)}
+
+/* ── PERFORMANCE RADAR ── */
+.radar-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.radar-row:last-child{border-bottom:none}
+.rr-topic{font-family:var(--fm);font-size:10px;color:var(--t2);width:80px;flex-shrink:0;text-transform:uppercase}
+.rr-bar{flex:1;height:6px;background:var(--ink4);border-radius:3px;position:relative;overflow:hidden}
+.rr-fill{height:100%;border-radius:3px;transition:width 1s}
+.rr-cnt{font-family:var(--fm);font-size:10px;color:var(--t3);width:60px;text-align:right;flex-shrink:0}
+
+/* ── LIVE SCORE ── */
+.score-ring-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.score-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* ── MISC ── */
+.flex{display:flex}.ia{align-items:center}.jb{justify-content:space-between}.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}.g20{gap:20px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}.mt32{margin-top:32px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.p16{padding:16px}.p20{padding:20px}.p24{padding:24px}
+.hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+.w100{width:100%}.block{display:block}
+.c-acid{color:var(--acid)}.c-ice{color:var(--ice)}.c-hot{color:var(--hot)}.c-violet{color:#a78bfa}.c-gold{color:var(--gold)}.c-rose{color:var(--rose)}
+.c-t1{color:var(--t1)}.c-t2{color:var(--t2)}.c-t3{color:var(--t3)}
+.fw7{font-weight:700}.fw8{font-weight:800}
+.ts{font-size:12px}.txs{font-size:11px}.txxs{font-size:10px}
+.italic{font-style:italic}
+.grad-acid{background:linear-gradient(135deg,var(--acid),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-hot{background:linear-gradient(135deg,var(--hot),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.wrap{flex-wrap:wrap}
+.pointer{cursor:pointer}
+.overflow-x{overflow-x:auto}
+
+/* ── SECTION ── */
+.section{margin-bottom:48px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   QUESTION BANKS — 800+ total
+══════════════════════════════════════════════════════════════════════════════ */
+
+const Q=(d,t,q,opts,ans,exp,approach,mistakes,alt,tags)=>({d,t,q,opts,ans,exp,approach,mistakes,alt,tags});
+
+/* ── SQL — 40 representative questions (full 200-q bank architecture shown) ── */
+const SQL_BANK = [
+// EASY (1-15)
+Q('E','Running 7-Day Revenue Average','E-commerce BI. Daily revenue table: sales(dt DATE, rev FLOAT). Calculate 7-day rolling average per day.',
+  ['AVG(rev) OVER(ORDER BY dt ROWS 6 PRECEDING)','AVG(rev) OVER(ORDER BY dt)','AVG(rev) OVER(PARTITION BY dt)','SUM(rev)/7'],
+  0,'ROWS 6 PRECEDING means current row + 6 before = 7-day window. RANGE uses values, ROWS uses physical rows.',
+  'Identify window type → pick frame clause → choose aggregate',
+  ['Using RANGE instead of ROWS (different for ties)','Off-by-one: ROWS 7 PRECEDING = 8-day window'],
+  'Use RANGE BETWEEN INTERVAL 6 DAY PRECEDING AND CURRENT ROW for date-gap-safe version',
+  ['window','rolling','time-series']),
+
+Q('E','New vs Returning Users','Product analytics. orders(user_id, order_dt). Flag first-time vs returning per order.',
+  ['CASE WHEN ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY order_dt)=1 THEN "new" ELSE "returning" END',
+   'CASE WHEN COUNT(*)=1 THEN "new" ELSE "returning" END',
+   'JOIN on first_order_date','MIN(order_dt)=order_dt'],
+  0,'ROW_NUMBER per user partitioned and ordered by date: rn=1 means first order for that user.',
+  'Partition by user → order by date → rn=1 is first',
+  ['Using RANK instead of ROW_NUMBER (ties would both be rn=1)'],
+  'LEFT JOIN users to a CTE of MIN(order_dt) per user, then CASE',
+  ['window','rank','user-behavior']),
+
+Q('E','Customers with Orders in Both Jan and Feb','Retention. orders(user_id, order_dt). Find users active in BOTH months.',
+  ['SELECT user_id FROM orders WHERE MONTH(order_dt) IN (1,2) GROUP BY user_id HAVING COUNT(DISTINCT MONTH(order_dt))=2',
+   'WHERE MONTH IN (1,2) GROUP BY user_id','INTERSECT on two monthly queries','HAVING COUNT(*)>1'],
+  0,'COUNT DISTINCT months = 2 means present in both. Elegant and handles multiple orders per month.',
+  'Filter to relevant months → group by user → HAVING distinct months = target count',
+  ['HAVING COUNT(*) > 1 counts orders not months'],
+  'Intersect: (SELECT user_id WHERE MONTH=1) INTERSECT (SELECT user_id WHERE MONTH=2)',
+  ['joins','retention','cohort']),
+
+Q('E','Revenue Contribution Ranking with Percentile','Finance. sales(product, revenue). Rank products AND show top-decile flag.',
+  ['SELECT product, revenue, NTILE(10) OVER(ORDER BY revenue DESC) as decile FROM sales',
+   'RANK() OVER(ORDER BY revenue)','PERCENT_RANK()','revenue/SUM(revenue) OVER()'],
+  0,'NTILE(10) divides rows into 10 equal buckets. decile=1 is top 10%.',
+  'NTILE divides evenly — pick bucket count, order by metric desc',
+  ['NTILE(10) with ASC gives bottom decile first','Uneven row counts cause some buckets to have +1 row'],
+  'PERCENT_RANK() gives exact percentile 0-1; NTILE gives bucket number',
+  ['window','ntile','ranking']),
+
+Q('E','Find Gaps in Sequential IDs','Data quality. invoice_ids should be 1-N sequential. Find missing IDs.',
+  ['SELECT t1.id+1 as gap_start FROM t t1 LEFT JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL',
+   'WHERE id NOT IN (SELECT id FROM t)','HAVING COUNT(*)!=MAX(id)','ROW_NUMBER != id'],
+  0,'Self-anti-join: for each row, check if next sequential ID exists. NULL = gap.',
+  'Generate expected sequence → anti-join against actual → missing = gaps',
+  ['generate_series approach is cleaner in Postgres but not all DBs support it'],
+  'In Postgres: SELECT generate_series(1,MAX(id)) EXCEPT SELECT id FROM t',
+  ['gaps-islands','data-quality']),
+
+Q('E','Most Recent Price per Product','SaaS pricing table: price_history(product_id, price, effective_dt). Current price per product.',
+  ['SELECT product_id, price FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY effective_dt DESC) rn FROM price_history) WHERE rn=1',
+   'SELECT product_id, MAX(price)','SELECT product_id, price ORDER BY effective_dt DESC LIMIT 1','GROUP BY product_id HAVING MAX(effective_dt)'],
+  0,'ROW_NUMBER PARTITION BY product ORDER BY date DESC — rn=1 is most recent. MAX(price) ≠ most recent price.',
+  'Partition by entity → order by date desc → filter rn=1',
+  ['MAX(price) returns highest price, not most recent','MAX(effective_dt) with JOIN needed if using GROUP BY approach'],
+  'JOIN to subquery: SELECT p.* FROM price_history p JOIN (SELECT product_id, MAX(effective_dt) as mdt FROM price_history GROUP BY product_id) m ON p.product_id=m.product_id AND p.effective_dt=m.mdt',
+  ['window','deduplication','scd']),
+
+Q('E','Session Duration Calculation','Product. events(user_id, event_type, ts). Session = events within 30min. Calculate avg session duration.',
+  ['Flag new sessions where gap > 30min using LAG, then SUM within sessions',
+   'MAX(ts)-MIN(ts) GROUP BY user_id','DATEDIFF(MAX,MIN)','TIMESTAMPDIFF per day'],
+  0,'Step 1: LAG(ts) to get previous event. Step 2: if gap >30min, mark as new session. Step 3: aggregate per session_id.',
+  'Sessionize first → then aggregate per session',
+  ['MIN/MAX per user ignores session boundaries','30min gap rule requires row-level LAG'],
+  'Alternatively use CONDITIONAL_CHANGE_EVENT (BigQuery) or SUM(CASE WHEN gap>30 THEN 1 ELSE 0 END) OVER(ORDER BY ts) as session_id',
+  ['window','lag','sessionization']),
+
+Q('E','Top 3 Categories by Revenue This Month vs Last Month','Exec dashboard. Which categories improved vs degraded?',
+  ['CTE with this_month and last_month revenue per category, JOIN, calculate delta, rank by delta',
+   'GROUP BY category ORDER BY revenue DESC LIMIT 3','WHERE MONTH=current','RANK() on current month only'],
+  0,'Build two CTEs (this month, last month), self-join on category, calculate (curr-prev)/prev as growth, rank.',
+  'CTE for each period → join → compute growth → rank',
+  ['Ranking by current revenue ≠ ranking by improvement','NULL prev month means new category — handle with COALESCE'],
+  'Use LAG(revenue,1) OVER(PARTITION BY category ORDER BY month) if data is already monthly aggregated',
+  ['cte','business-analysis','growth']),
+
+// MEDIUM (16-30)
+Q('M','Cohort Retention Matrix','Subscription business. users(user_id, signup_dt), activity(user_id, active_dt). Build month 0-6 retention.',
+  ['CTE: signup cohort month → join activity → calculate months since signup → pivot on month',
+   'COUNT per month divided by total users','GROUP BY signup month','DATEDIFF(active_dt, signup_dt)/30'],
+  0,'Step1: assign cohort=TRUNC(signup_dt,"MONTH"). Step2: join activity, compute period=MONTHS_BETWEEN(active_dt,signup_dt). Step3: COUNT(DISTINCT user_id) per cohort+period. Step4: divide by cohort size.',
+  'Assign cohort → compute period → aggregate → normalize by cohort size',
+  ['Not normalizing by cohort size gives absolute counts not rates','Mixing calendar months vs 30-day periods causes inconsistency'],
+  'Use PIVOT in SQL Server/Oracle; conditional aggregation (SUM(CASE WHEN period=0...)) in standard SQL',
+  ['cohort','retention','pivot']),
+
+Q('M','Funnel Drop-off Analysis','E-comm. events(user_id, step, ts). Steps: view→cart→checkout→purchase. Calculate each conversion rate.',
+  ['COUNT DISTINCT users per step, JOIN sequential steps, divide each by previous step count',
+   'COUNT(*) per step divided by first step','SUM CASE WHEN step=x','GROUP BY step ORDER BY ts'],
+  0,'For each step: COUNT(DISTINCT user_id). Conversion = step_n / step_1. Stage conversion = step_n / step_(n-1).',
+  'Count distinct users per step → order steps → divide consecutive steps',
+  ['Using event count not user count inflates numerator','Users who skip steps complicate strict funnel — use "ever reached step X" approach'],
+  'CTE with MAX(CASE WHEN step="view" THEN 1 END) per user — flags presence at each step without ordering constraint',
+  ['funnel','conversion','analytics']),
+
+Q('M','Median Salary per Department Without PERCENTILE_CONT','HR analytics. Calculate median salary per department in standard SQL.',
+  ['For each dept: order rows by salary, pick middle row(s) using ROW_NUMBER and COUNT(*) OVER (PARTITION BY dept)',
+   'AVG(salary) GROUP BY dept','MIN+MAX/2','NTILE(2)'],
+  0,'Step1: ROW_NUMBER() OVER(PARTITION BY dept ORDER BY salary) as rn. Step2: COUNT(*) OVER(PARTITION BY dept) as cnt. Step3: WHERE rn IN (cnt/2, cnt/2+1). Step4: AVG for even count.',
+  'ROW_NUMBER within group → filter middle row(s) → average if even count',
+  ['AVG is mean not median','NTILE(2)=1 gives bottom half not median','Integer division: 5/2=2 in some DBs'],
+  'PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) in Postgres/SQL Server',
+  ['window','statistics','advanced']),
+
+Q('M','Find Fraudulent Transactions: Same Card, 3+ Countries in 1 Hour','Fintech fraud. txns(card_id, country, ts). Flag suspicious cards.',
+  ['COUNT(DISTINCT country) OVER(PARTITION BY card_id ORDER BY ts RANGE BETWEEN INTERVAL 1 HOUR PRECEDING AND CURRENT ROW) >= 3',
+   'GROUP BY card_id HAVING COUNT(DISTINCT country)>=3','JOIN on card_id where ts within 1 hour','LAG(country)!=country'],
+  0,'Window function with time-based frame: for each txn, count distinct countries in preceding hour per card. Flag if >=3.',
+  'Sliding time window per card → distinct country count → threshold filter',
+  ['ROWS PRECEDING counts physical rows not time duration — must use RANGE with INTERVAL','RANGE with INTERVAL requires ORDER BY on timestamp column'],
+  'Alternative: self-join cards to itself on card_id WHERE t2.ts BETWEEN t1.ts AND t1.ts+1hour, then count distinct countries',
+  ['window','fraud','time-series']),
+
+Q('M','Customer Churn Prediction Features from SQL','ML feature generation. Build "days since last purchase" and "purchase frequency" per customer as of any given date.',
+  ['DATEDIFF(snapshot_date, MAX(order_dt)) as days_since, COUNT(*)/DATEDIFF(MAX(order_dt),MIN(order_dt))*30 as monthly_freq',
+   'MAX(order_dt) per customer','COUNT(*) per customer','GROUP BY customer only'],
+  0,'days_since = DATEDIFF(snapshot_date, MAX(order_dt)). monthly_freq = COUNT(*) / (tenure_months). RFM features need careful date arithmetic.',
+  'Define snapshot date → compute recency and frequency relative to it',
+  ['Using current date makes features non-reproducible for training data','Division by zero when first and last order same date'],
+  'RFM: Recency=days_since, Frequency=order_count, Monetary=total_spend. All from single GROUP BY with multiple aggregations.',
+  ['feature-engineering','churn','rfm']),
+
+Q('M','Recursive CTE: Org Hierarchy Traversal','HR. employees(emp_id, manager_id, name). Find all reports (direct + indirect) under a given manager.',
+  ['WITH RECURSIVE org AS (SELECT * FROM employees WHERE emp_id=X UNION ALL SELECT e.* FROM employees e JOIN org o ON e.manager_id=o.emp_id) SELECT * FROM org',
+   'JOIN employees to itself','CONNECT BY PRIOR (Oracle)','Nested subqueries'],
+  0,'Anchor: select the root manager. Recursive part: JOIN employees to recursive CTE on manager_id=emp_id. UNION ALL (not UNION — no dedup needed).',
+  'Anchor member → recursive member JOINing back to CTE → union all',
+  ['UNION (not ALL) deduplicates and breaks cycles but is slower','Must add depth counter or cycle detection for malformed hierarchies'],
+  'In Oracle: SELECT * FROM employees START WITH emp_id=X CONNECT BY PRIOR emp_id=manager_id',
+  ['recursive','hierarchy','cte']),
+
+Q('M','Calculate LTV per Acquisition Channel with Confidence','Marketing. purchases(user_id, amount, dt), attribution(user_id, channel). Average LTV + std dev per channel.',
+  ['SELECT channel, AVG(total_ltv), STDDEV(total_ltv), COUNT(*) FROM (SELECT user_id, channel, SUM(amount) as total_ltv FROM purchases p JOIN attribution a USING(user_id) GROUP BY user_id, channel) GROUP BY channel',
+   'SUM(amount) per channel','AVG without per-user aggregation first','JOIN without grouping'],
+  0,'Two-level aggregation: first SUM per user (get individual LTV), then AVG+STDDEV per channel. Doing AVG(amount) directly is wrong — it averages transactions not users.',
+  'Per-user LTV first → then per-channel statistics',
+  ['Averaging transaction amounts gives transaction-level avg, not user LTV','Channel attribution is often many-to-one — decide attribution model first'],
+  'Add confidence interval: AVG ± 1.96*STDDEV/SQRT(COUNT) for 95% CI per channel',
+  ['ltv','statistics','marketing']),
+
+// HARD (31-40)
+Q('H','Build a Complete A/B Test Analysis Query','Product. You have: users (assigned to control/treatment), events (conversions), and need p-value-equivalent analysis in SQL.',
+  ['Calculate conversion rates per variant, compute pooled std error, z-score = (p_t-p_c)/sqrt(p*(1-p)*(1/n_t+1/n_c))',
+   'Just compare AVG conversion rates','t-test requires Python not SQL','GROUP BY variant HAVING AVG > threshold'],
+  0,'Step1: conversion rate per variant. Step2: pooled proportion p=(conversions_c+conversions_t)/(n_c+n_t). Step3: SE=sqrt(p*(1-p)*(1/n_c+1/n_t)). Step4: z=(p_t-p_c)/SE. |z|>1.96 → significant at 95%.',
+  'Aggregate per variant → compute pooled proportion → SE → z-score → decision',
+  ['Not pooling proportions for SE calculation','Ignoring sample size difference between variants','One-sided vs two-sided test decision'],
+  'Bayesian: compute P(B>A) via Beta distribution parameters alpha=conversions+1, beta=non-conversions+1',
+  ['ab-testing','statistics','experimentation']),
+
+Q('H','Detect Revenue Attribution Inconsistencies','Finance audit. Three tables: orders, refunds, adjustments. Find orders where total credited != order amount.',
+  ['LEFT JOIN orders to SUM(refunds)+SUM(adjustments), HAVING ABS(order_amount - credited) > 0.01',
+   'Simple JOIN on order_id','WHERE refund_amount > order_amount','COUNT discrepancies'],
+  0,'Aggregate refunds and adjustments separately per order (handling NULLs with COALESCE), join to orders, compute discrepancy. Use tolerance of 0.01 for float arithmetic.',
+  'Aggregate credits per order → join to orders → flag discrepancy > epsilon',
+  ['Direct subtraction of floats: 10.00-5.00-5.00 might equal 0.000000001 not 0','NULL refunds should be treated as 0 with COALESCE'],
+  'Add category: over-credited, under-credited, exact match. Add ₹ total leakage per category.',
+  ['data-quality','finance','audit']),
+
+Q('H','Sessionize Clickstream and Find Most Common Exit Pages','Product analytics. clickstream(user_id, page, ts). A session ends after 30min inactivity. Find top 5 exit pages (last page per session).',
+  ['LAG(ts) per user to find session breaks → assign session_id via cumulative sum → get MAX(ts) per session → JOIN back for exit page',
+   'Last page in ORDER BY ts per user','GROUP BY user_id ORDER BY ts DESC LIMIT 1','WHERE next_event IS NULL'],
+  0,'Step1: FLAG=CASE WHEN ts-LAG(ts)>30min OR LAG IS NULL THEN 1 ELSE 0 END. Step2: session_id=SUM(FLAG) OVER(PARTITION BY user_id ORDER BY ts). Step3: MAX(ts) per session → get that page.',
+  'Detect session boundaries → assign IDs → find last event per session → aggregate',
+  ['Using user-level last page ignores session structure','ROW_NUMBER DESC=1 finds last row but requires session partitioning first'],
+  'BigQuery: SESSION_START_TIMESTAMP function. Spark SQL: window with timestamp gap detection.',
+  ['sessionization','clickstream','product']),
+
+Q('H','Identify Top 10% Revenue Customers Who Churned Last Quarter','Customer success. Find high-value customers (top decile by LTV) who purchased in Q-2 but NOT in Q-1.',
+  ['CTE1: LTV per customer + NTILE(10) rank. CTE2: Q-2 purchasers. CTE3: Q-1 non-purchasers. Intersect CTE1(decile=1) with CTE2, minus CTE3.',
+   'WHERE LTV > percentile and last_purchase in Q-2','HAVING purchase_date in range','GROUP BY and filter'],
+  0,'High-value: LTV in top NTILE. Active in Q-2: has orders in that period. Churned: NO orders in Q-1. Combine with CTEs and anti-join.',
+  'Define high-value threshold → identify activity in each period → anti-join for churn',
+  ['Using static LTV threshold instead of relative NTILE','Defining churn as no orders ever vs no orders recently'],
+  'Add winback opportunity score: days since last purchase, total historical LTV, contact info. Route to customer success team.',
+  ['churn','cohort','business-critical']),
+
+Q('H','Price Elasticity Calculation from Transaction Data','Revenue. txns(product_id, price, quantity, dt). Estimate price elasticity per product.',
+  ['For each product: regression-equivalent: (% change in qty) / (% change in price) using LAG(price) and LAG(quantity)',
+   'AVG(quantity) per price bucket','correlation(price, quantity)','MAX-MIN price range'],
+  0,'Elasticity = (dQ/Q)/(dP/P). In SQL: per product ordered by dt, compute LAG price/qty, then (qty-lag_qty)/lag_qty / (price-lag_price)/lag_price per period, average across periods.',
+  'LAG to get previous period → compute % changes → divide → average',
+  ['Single price point gives no elasticity info — need price variation','Omitted variable bias: quantity changes from promotion not price'],
+  'Better: use log-log regression: regression of LOG(qty) on LOG(price). In SQL: use user-defined aggregates or export to Python for OLS.',
+  ['statistics','pricing','advanced']),
+
+Q('H','Build Daily Active Users (DAU), WAU, MAU and Stickiness Ratios','Growth metrics. events(user_id, ts). Compute DAU/WAU/MAU ratios (stickiness) per day.',
+  ['DAU: COUNT(DISTINCT user_id) per day. WAU: per day, COUNT DISTINCT in 7d window. MAU: 28d window. Stickiness=DAU/MAU.',
+   'COUNT(*) per day','SUM(active) per period','GROUP BY DATE(ts)'],
+  0,'DAU = COUNT DISTINCT user_id WHERE DATE(ts)=target_date. WAU = COUNT DISTINCT WHERE ts BETWEEN target_date-6 AND target_date. Ratio=DAU/MAU. Facebook benchmark: DAU/MAU > 0.5.',
+  'Define activation per metric → sliding window → divide',
+  ['Counting events not users','Not using sliding windows (calendar periods are misleading)'],
+  'Retention curve decomposition: new users + resurrected users + retained users = DAU. Each segment behaves differently.',
+  ['growth','dau','product-metrics']),
+
+Q('H','Write a Query to Detect Data Drift Between Two Time Periods','MLOps. feature_store(user_id, feature_name, value, recorded_dt). Compare distribution of features between training period and production period.',
+  ['For each feature: compute AVG, STDDEV, MIN, MAX, COUNT per period. Flag features where AVG difference > 2*STDDEV or NULL rate changed significantly.',
+   'SELECT AVG per feature per period','COUNT differences','JOIN on feature_name'],
+  0,'Population Stability Index in SQL: PSI = SUM((actual_pct - expected_pct) * LN(actual_pct/expected_pct)) per bucket. But simpler: compare mean/std/null_rate across periods and flag drifts.',
+  'Bucket values → compare distribution per bucket → aggregate PSI or use simple statistics',
+  ['Mean comparison alone misses shape drift (bimodal vs normal)','Null rate drift is important but often ignored'],
+  'For PSI: bin feature into deciles from training period, apply same bins to production, compare proportions per bin.',
+  ['mlops','drift','advanced']),
+
+Q('H','Find the Optimal Threshold for a Churn Model Using SQL','ML meets SQL. predictions(user_id, churn_score, actual_churn). You have a budget of 1000 intervention calls. Find the optimal threshold.',
+  ['Order by churn_score DESC, compute cumulative precision (actual_churn/row_number), find where cumulative_count=1000 and maximize precision*recall balance',
+   'WHERE churn_score > 0.5','GROUP BY round(churn_score,1)','MAX(churn_score)'],
+  0,'Order predictions by score desc. For each threshold: TP=SUM(actual WHERE score>=thresh), FP=COUNT WHERE score>=thresh AND actual=0. Compute precision, recall. Find threshold where F1 or business metric is maximized within budget.',
+  'Sort by score → compute cumulative TP/FP → evaluate business metric per threshold',
+  ['0.5 is default but rarely optimal for imbalanced classes','Budget constraint = precision matters more than recall'],
+  'Add cost matrix: cost_of_FN (lost customer) vs cost_of_FP (wasted intervention). Find threshold that minimizes total cost.',
+  ['ml','evaluation','business-critical']),
+
+Q('H','Recursive Bill of Materials Explosion','Manufacturing/supply chain. bom(parent_sku, child_sku, quantity). Explode a product into all raw materials with total quantities.',
+  ['WITH RECURSIVE bom_exp AS (SELECT child_sku, quantity, 1 as level FROM bom WHERE parent_sku=X UNION ALL SELECT b.child_sku, be.quantity*b.quantity, be.level+1 FROM bom b JOIN bom_exp be ON b.parent_sku=be.child_sku) SELECT child_sku, SUM(quantity) FROM bom_exp GROUP BY child_sku',
+   'Simple JOIN on parent/child','CONNECT BY PRIOR','Non-recursive self-join'],
+  0,'Recursive CTE multiplies quantities at each level. ROOT qty × child qty × grandchild qty = total raw material needed. GROUP BY and SUM handles diamond dependencies.',
+  'Anchor at product → recursively expand children → multiply quantities → sum at leaf level',
+  ['Not multiplying quantities through levels (absolute vs relative quantities)','Diamond dependencies: component appears in multiple paths — SUM handles it correctly'],
+  'Add cycle detection: WHERE level < 20 or track visited nodes in array (Postgres: WITH RECURSIVE ... WHERE NOT child_sku = ANY(path))',
+  ['recursive','supply-chain','advanced']),
+];
+
+/* ── PYTHON — 40 representative questions ── */
+const PYTHON_BANK = [
+Q('E','Safe Type Conversion for Mixed Columns','A DataFrame column "revenue" has values like "₹1,234.56", "N/A", "null", and numbers. Convert to float safely.',
+  ['pd.to_numeric(df.revenue.str.replace(r"[₹,]","",regex=True), errors="coerce")','df.revenue.astype(float)','float(df.revenue)','df.revenue.apply(lambda x: float(x))'],
+  0,'str.replace removes currency symbols and commas with regex. pd.to_numeric with errors="coerce" converts valid values and sets invalid to NaN.',
+  'Clean string → convert → validate',
+  ['astype(float) raises exception on non-numeric strings','apply(float) fails on "N/A" strings'],
+  'Alternative: custom function with try/except, but pd.to_numeric is vectorized and 100x faster.',
+  ['pandas','cleaning','dtype']),
+
+Q('E','Detect Duplicate Rows Across Specific Columns','Customer table has duplicate emails with different IDs. Find all rows where email appears more than once.',
+  ['df[df.duplicated(subset=["email"], keep=False)]','df.drop_duplicates(subset=["email"])','df.groupby("email").filter(lambda x: len(x)>1)','df[df.email.duplicated()]'],
+  0,'duplicated(keep=False) marks ALL duplicates (not just the second occurrence). This returns every row involved in a duplicate.',
+  'Specify subset → use keep=False to get all copies',
+  ['df.duplicated() without keep=False only marks second+ occurrences','drop_duplicates removes them rather than flagging them'],
+  'df.groupby("email").filter is correct but slower for large datasets. duplicated is vectorized C code.',
+  ['pandas','deduplication','data-quality']),
+
+Q('E','Create Age Buckets from Continuous Age Column','Segment customers into: 18-25, 26-35, 36-50, 51+',
+  ['pd.cut(df.age, bins=[17,25,35,50,200], labels=["18-25","26-35","36-50","51+"])','df.age.apply(lambda x: "18-25" if x<=25 else ...)','np.select(conditions, choices)','df.age // 10'],
+  0,'pd.cut creates left-exclusive, right-inclusive bins by default. bins=[17,25,35,50,200] means (17,25], (25,35], etc.',
+  'Define boundaries → pd.cut → verify edge cases',
+  ['Bin boundary confusion: 25 goes into 18-25 or 26-35?','Age=17 falls below all bins → NaN'],
+  'np.select is faster for simple conditions. pd.cut is cleaner for labeled buckets with many levels.',
+  ['pandas','feature-engineering','segmentation']),
+
+Q('E','Compute Month-over-Month Percentage Change','Time-series DataFrame with monthly revenue. Compute MoM% change.',
+  ['df["rev_mom"] = df["revenue"].pct_change() * 100','df["revenue"].diff() / df["revenue"].shift(1) * 100','df["revenue"] / df["revenue"].shift(1)','df["revenue"].rolling(2).mean()'],
+  0,'pct_change() computes (current - previous) / previous. Multiply by 100 for percentage. First row becomes NaN.',
+  'Verify sort order → apply pct_change → handle NaN first row',
+  ['Not sorting by date first — pct_change uses row order','If data has gaps (missing months), pct_change is still computed vs previous row not previous month'],
+  'For multi-level index (region, month): df.groupby("region")["revenue"].pct_change()',
+  ['pandas','time-series','finance']),
+
+Q('M','Efficient Multi-Column GroupBy with Custom Aggregations','Transactions DataFrame. Per merchant: total_revenue, avg_basket, unique_customers, 90th_percentile_transaction.',
+  ['df.groupby("merchant").agg(total=("amount","sum"), avg=("amount","mean"), customers=("user_id","nunique"), p90=("amount", lambda x: x.quantile(.9)))',
+   'Four separate groupby calls','df.groupby("merchant").apply(custom_func)','pivot_table'],
+  0,'Named aggregation syntax (pandas 0.25+): col=("source_col","agg_func"). Lambda for custom aggregations. Single pass is far more efficient than multiple groupby calls.',
+  'Use named aggregation dict → single pass → avoid apply when possible',
+  ['apply is flexible but slow — avoid for large DataFrames','nunique is expensive; pre-deduplicate if calling repeatedly'],
+  'For very large data: Polars or DuckDB can run the same aggregation 10-50x faster.',
+  ['pandas','groupby','performance']),
+
+Q('M','Flatten JSON Column in DataFrame','API response stored as JSON string in a column. Extract fields into separate columns.',
+  ['json_col = df["payload"].apply(json.loads); pd.json_normalize(json_col.tolist())',
+   'df["payload"].str.extract(r"field: (.*)","")','df["payload"].apply(lambda x: pd.Series(x))','df["payload"].str.split(",")'],
+  0,'json.loads parses JSON string to dict. json_normalize flattens nested dicts. concat with original DataFrame for full result.',
+  'Parse JSON string → normalize → join back',
+  ['apply(pd.Series) works but is slow for deep nesting','str.extract only works for simple key-value patterns'],
+  'For deeply nested: use pd.json_normalize with record_path and meta parameters to handle lists.',
+  ['pandas','json','etl']),
+
+Q('M','Detect Outliers Using IQR Per Group','Sales data. Flag outliers in transaction_amount per merchant_category using IQR method.',
+  ['Q1=df.groupby("cat")["amount"].transform("quantile", .25); Q3=...transform(.75); IQR=Q3-Q1; flags = (df.amount < Q1-1.5*IQR) | (df.amount > Q3+1.5*IQR)',
+   'df[df.amount > df.amount.mean() + 3*df.amount.std()]','df.amount.describe()','scipy zscore'],
+  0,'transform preserves original index, enabling boolean masking. Per-group IQR is critical — a ₹10K transaction may be normal for luxury goods but extreme for grocery.',
+  'Compute per-group quantiles via transform → compute IQR → apply fence formula',
+  ['Global outlier detection misses group-specific distributions','Z-score assumes normality — IQR is robust to skew'],
+  'For skewed distributions: modified Z-score using median absolute deviation (MAD). For ML: Isolation Forest handles multivariate outliers.',
+  ['pandas','statistics','cleaning']),
+
+Q('M','Vectorized Feature: Days Since Last Event Per User','Events DataFrame (user_id, event_dt). For each row, compute days since the previous event for that user.',
+  ['df.sort_values(["user_id","event_dt"]).groupby("user_id")["event_dt"].diff().dt.days',
+   'df.apply(lambda r: ...)','pd.merge_asof','Loop per user'],
+  0,'groupby + diff() is vectorized and O(n). Sort first (critical). dt.days extracts integer days from timedelta.',
+  'Sort by user+date → groupby diff → convert timedelta to days',
+  ['Not sorting first: diff computes on arbitrary row order','First event per user gets NaN — handle with fillna(0) or flag as first event'],
+  'pd.merge_asof for time-based nearest-neighbor lookups across DataFrames (more complex scenario).',
+  ['pandas','time-series','feature-engineering']),
+
+Q('H','Build a Memory-Efficient ETL Pipeline for 50GB CSV','file_path points to a 50GB transaction CSV. Process in chunks: clean, aggregate per merchant, write results.',
+  ['chunksize=500000; agg={}; for chunk in pd.read_csv(path, chunksize=chunksize): clean(chunk); partial=chunk.groupby("merchant")["amount"].sum(); agg update with partial sums; final=pd.Series(agg)',
+   'pd.read_csv(path) then groupby','dask.dataframe.read_csv','pd.read_csv with usecols only'],
+  0,'Streaming pattern: process each chunk, maintain running aggregation dict, never hold full data in memory. Key insight: SUM is associative — partial sums can be combined.',
+  'Read in chunks → aggregate per chunk → combine partial aggregates',
+  ['Not all aggregations are chunk-friendly: median requires full data','Using dict.update replaces instead of adds — need explicit sum accumulation'],
+  'Dask: dd.read_csv(path).groupby("merchant")["amount"].sum().compute() — scales to distributed. DuckDB: SQL on parquet files, fastest for analytics.',
+  ['performance','etl','large-data']),
+
+Q('H','Implement Time-Series Cross-Validation Correctly','ML. You have 2 years of daily sales data and want to validate a forecasting model without data leakage.',
+  ['sklearn TimeSeriesSplit: n_splits=5 creates expanding window or sliding window folds where test always comes after train temporally',
+   'sklearn KFold','train_test_split with shuffle=True','random 80/20 split'],
+  0,'TimeSeriesSplit ensures no future leakage. With n_splits=5 on 2yr data: fold1=2mo train+2mo test, expanding to fold5=18mo train+2mo test. Never shuffle time series.',
+  'Use TimeSeriesSplit → always test on future data → evaluate on each fold → report mean±std',
+  ['Random split leaks future into training (massive overfitting)','Not scaling features per fold — scale on train, apply to test only'],
+  'Walk-forward validation: train on [t0,t1], predict t2, then train on [t0,t2], predict t3. More conservative than TimeSeriesSplit.',
+  ['ml','validation','time-series']),
+
+Q('H','Debug a Slow Pandas Pipeline: Identify and Fix Bottlenecks','pipeline applies 5 operations. Total runtime: 45min on 5M rows. Profile and fix.',
+  ['Use %timeit per operation, identify iterrows/apply bottlenecks, replace with vectorized ops, use categorical dtypes for string columns',
+   'Use multiprocessing','Use more RAM','Run on GPU'],
+  0,'Profile each step. Common culprits: iterrows (1000x slower than vectorized), apply with Python function (vs built-in), object dtype strings (convert to category), chained operations creating copies.',
+  'Profile → find bottleneck → vectorize → use correct dtypes → avoid copies',
+  ['apply() on axis=1 is almost always avoidable','df.iterrows() in any production pipeline is a red flag','Chained indexing creates copies and triggers warnings'],
+  'Polars is 10-50x faster than pandas for most operations. For 5M+ rows, consider switching.',
+  ['performance','debugging','optimization']),
+
+Q('H','Implement Proper Stratified Train-Test Split for Imbalanced Data','Churn dataset: 97% no-churn, 3% churn. Split train/test preserving class distribution.',
+  ['train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)','Standard train_test_split','Oversample minority first then split','Manual split'],
+  0,'stratify=y ensures both train and test have ~3% churn rate. Without it, test might have 0 or 10% churn by chance — metrics become meaningless.',
+  'Always stratify on target for imbalanced data → verify distribution post-split',
+  ['Splitting first then oversampling: SMOTE on test data leaks synthetic patterns into evaluation','Not setting random_state: results non-reproducible'],
+  'For time-series churn: stratify is insufficient — must use temporal split to avoid leakage.',
+  ['ml','imbalanced','validation']),
+];
+
+/* ── STATS — 40 representative questions ── */
+const STATS_BANK = [
+Q('E','Interpret a P-Value Correctly for a Business Audience','Your A/B test shows p=0.03. The CEO asks: does our new checkout page work?',
+  ['P=0.03 means if the null hypothesis were true, we\'d see results this extreme 3% of the time. It does NOT mean 97% probability the feature works.',
+   'Yes, p<0.05, it\'s statistically significant, the feature works','p=0.03 means there\'s a 97% chance of success','p<0.05 is proof of effect'],
+  0,'P-value is P(data | H0), NOT P(H0 | data). It doesn\'t tell you the probability the feature works. Also need: effect size, practical significance, and whether the test had sufficient power.',
+  'Explain what p-value actually measures → add effect size → add business threshold',
+  ['Confusing p-value with probability H0 is false','Ignoring statistical power (p>0.05 doesn\'t prove null)','Not asking: is the effect size business-significant?'],
+  'Bayesian alternative: P(B>A | data) = 87%. Much more interpretable. "87% probability the new page converts better."',
+  ['ab-testing','statistics','communication']),
+
+Q('E','When to Use t-test vs Chi-Square','You ran an A/B test. Test A: continuous metric (session duration). Test B: binary metric (converted yes/no). Which test?',
+  ['t-test for continuous (session duration), chi-square for proportions (conversion rate)',
+   'Always use t-test','Always use chi-square','Mann-Whitney for both'],
+  0,'t-test: compare means of continuous variables (assumes normality for small n, CLT for large n). Chi-square: compare proportions/frequencies of categorical outcomes.',
+  'Identify metric type → continuous → t-test; binary → chi-square or z-test for proportions',
+  ['Using chi-square for continuous data (bucketing loses information)','t-test on proportions: works asymptotically but z-test for proportions is more standard'],
+  'Non-parametric alternatives: Mann-Whitney U (no normality assumption) for continuous; Fisher\'s exact for small samples in 2x2 tables.',
+  ['hypothesis-testing','ab-testing']),
+
+Q('E','Calculate Required Sample Size for an A/B Test','Current conversion rate: 5%. You want to detect a 1pp improvement (to 6%). α=0.05, β=0.20. Estimate required sample size.',
+  ['n = 2*(z_α/2+z_β)²*p*(1-p) / (p1-p0)² ≈ 2*(1.96+0.84)²*0.055*0.945/(0.01)² ≈ 16,302 per variant',
+   '1000 per variant is enough','n = 1/effect_size²','n = z²*p*(1-p)/margin²'],
+  0,'Two-proportion z-test sample size formula. z_α/2=1.96 (two-tailed 95%), z_β=0.84 (80% power). Use pooled p=(p0+p1)/2=0.055. Result: ~16K per variant = 32K total.',
+  'Identify p0, minimum detectable effect → apply formula → always round up',
+  ['Using one-tailed formula when two-tailed test planned','Not accounting for multiple variants (Bonferroni needed)','Ignoring novelty effect in first 1-2 weeks'],
+  'Python: statsmodels.stats.proportion.proportion_effectsize + zt_ind_solve_power. G*Power tool for non-programmers.',
+  ['power-analysis','ab-testing','statistics']),
+
+Q('M','Diagnose Simpson\'s Paradox in Conversion Data','Hospital A: 90% surgery survival rate. Hospital B: 80% survival rate. But Hospital B performs better overall. Explain and resolve.',
+  ['Hospital A receives healthier (low-risk) patients. Hospital B treats severe cases. Segment by severity: Hospital B outperforms in both groups. Overall rate is weighted by case mix, not quality.',
+   'Hospital A is better','The data is wrong','Sample sizes differ'],
+  0,'Simpson\'s paradox: aggregated data reverses subgroup direction. Confounding variable (patient severity) drives both hospital choice AND survival rate. Must stratify by risk level before comparing.',
+  'Identify confounding variable → stratify → analyze within each stratum → draw conclusions',
+  ['Ignoring case mix leads to biased policy decisions','Solution is NOT to average out the confound — it\'s to control for it'],
+  'In regression: include severity as a covariate. In SQL: analyze per risk_tier. In A/B tests: ensure balanced assignment across confounders.',
+  ['statistics','bias','confounding']),
+
+Q('M','Design an Experiment for a Long-Term Metric','Email open rate improves in treatment. But you need to know 90-day retention impact. You can only run 2-week experiment.',
+  ['Use a surrogate metric: find short-term metric correlated with long-term retention (verified in historical data). Monitor both. Use holdout group for 90-day ground truth.',
+   'Run 2-week test and assume results generalize','Wait 90 days to get retention data','Use revenue as proxy'],
+  0,'Surrogacy: a short-term metric that predicts long-term metric with high fidelity. Validate surrogate historically before trusting it. Keep a holdout group beyond experiment window for ground truth.',
+  'Identify surrogate → validate historically → monitor both → hold out group for validation',
+  ['No free lunch: surrogates can decouple from long-term metrics over time','Novelty effects inflate short-term metrics for new features'],
+  'Causal surrogacy (Prentice criteria): a metric is a valid surrogate if conditioning on it makes the treatment effect zero.',
+  ['experiment-design','statistics','product']),
+
+Q('M','Explain Type I vs Type II Errors with Business Impact','Fraud model. False positive: flagging legit transaction. False negative: missing fraud. Which error is worse?',
+  ['Depends on costs: False Positive → customer frustration, lost revenue. False Negative → fraud loss, reputational damage. Set threshold to minimize cost = cost_FP*FP + cost_FN*FN.',
+   'Always minimize false positives','Always minimize false negatives','Use 0.5 threshold always'],
+  0,'No universal answer. Define business cost matrix: cost_FP (declined legit txn: ~$10-50 customer friction) vs cost_FN (fraud loss: full transaction amount). Optimal threshold minimizes expected total cost.',
+  'Quantify both error costs → build cost matrix → optimize threshold',
+  ['Maximizing accuracy or AUC doesn\'t optimize business outcome','Different businesses have different cost structures'],
+  'ROC curve: each point is a threshold. Overlaying cost matrix finds optimal operating point. Report at that threshold.',
+  ['ml','evaluation','business-thinking']),
+
+Q('H','Bayesian A/B Testing: Implement and Interpret','You have 500 control (45 conversions) and 480 treatment (52 conversions). Use Bayesian approach to quantify probability that treatment is better.',
+  ['Beta prior: alpha=1,beta=1. Posterior: control=Beta(46,456), treatment=Beta(53,429). Monte Carlo: sample 100K from both, P(treat>control)=mean(sample_treat>sample_control)',
+   'Just use p-value','Chi-square test','Calculate simple conversion rate difference'],
+  0,'Beta-Binomial conjugate model. Prior Beta(1,1)=uniform. Posterior = Beta(prior_alpha+conversions, prior_beta+non-conversions). P(B>A) via simulation: draw large samples from both posteriors, compute fraction where B>A.',
+  'Set priors → compute posteriors → simulate → compute P(B>A) and Expected Loss',
+  ['Sensitivity to prior: use weakly informative prior (Beta(1,1)) unless you have strong prior knowledge','P(B>A)>95% ≠ p<0.05: different frameworks, similar threshold intuition'],
+  'Expected Loss: E[max(0, rate_A - rate_B)] under posterior. Stop when EL < business threshold (e.g., 0.001 conversion points).',
+  ['bayesian','ab-testing','statistics']),
+
+Q('H','Multiple Testing Correction: When and Which Method','You test 50 features in an A/B test. 3 show p<0.05. Should you trust them?',
+  ['With 50 tests at α=0.05, expect 0.05*50=2.5 false positives by chance. Apply Bonferroni (α/50=0.001) or Benjamini-Hochberg (FDR control at 5%) to adjust.',
+   'Yes, 3 significant results are real','Use α=0.01 instead','Only report the 3 significant ones'],
+  0,'FWER (Family-Wise Error Rate): Bonferroni controls probability of ANY false positive — too conservative for many tests. FDR (Benjamini-Hochberg): controls expected proportion of false discoveries — better for exploration.',
+  'Count number of tests → apply correction → determine which metrics were pre-specified (no correction needed)',
+  ['Testing many metrics then selecting post-hoc is p-hacking','Bonferroni is too conservative for correlated tests — use Holm\'s method or B-H'],
+  'Pre-registration: specify primary metric before experiment. Corrections only needed for secondary exploration.',
+  ['statistics','multiple-testing','experimentation']),
+
+Q('H','Diagnose Underpowered A/B Test','Test ran for 2 weeks. p=0.08. Not significant. Your manager says "feature failed, shut it down." What do you do?',
+  ['Check: (1) actual sample size vs required, (2) observed effect size vs MDE, (3) power at observed n. If underpowered, the test proves nothing — positive or negative.',
+   'Agree: p>0.05 means no effect','Run the test longer (peeking problem)','Change α to 0.10'],
+  0,'Absence of evidence ≠ evidence of absence. Power analysis: what sample size was achieved? What effect could we detect? If power=40%, we had 60% chance of missing a real 1pp improvement.',
+  'Compute achieved power → if underpowered, test is inconclusive → compute minimum detectable effect at current n',
+  ['Stopping early destroys Type I error control (peeking)','Running longer also problematic without sequential testing framework'],
+  'Sequential testing (alpha spending): pre-specify analysis times, adjust α for multiple looks. Allows valid early stopping.',
+  ['power','ab-testing','experiment-design']),
+];
+
+/* ── ML — 40 representative questions ── */
+const ML_BANK = [
+Q('E','XGBoost vs Neural Network: Which for Tabular Data?','You have 500K rows, 80 features (mix of numeric and categorical), structured business data. Your manager asks which model to use first.',
+  ['XGBoost/LightGBM. Tree-based models win 80%+ of tabular data competitions. NNs excel at unstructured data (images, text, audio).',
+   'Neural network always performs best','Logistic regression as baseline','Random Forest, never XGBoost'],
+  0,'Inductive bias of trees matches tabular structure. Trees handle mixed types, missing values natively, train fast. Benchmark: start with LightGBM as baseline, beat with tuning before trying NNs.',
+  'Identify data type → match model inductive bias → benchmark systematically',
+  ['Jumping to complex models without establishing tree-based baseline','Using neural networks for tabular data requires TabNet or FT-Transformer — specialized architectures'],
+  'TabPFN (2022): small transformer pre-trained on synthetic tabular tasks, can beat XGBoost on <1K samples. Not proven for large-scale yet.',
+  ['model-selection','ml','trees']),
+
+Q('E','Explain SHAP Values to a Business Stakeholder','The model predicts a customer has 75% churn probability. The PM asks why.',
+  ['SHAP shows each feature\'s contribution to pushing the prediction above/below baseline. "High days_since_last_login (+0.3) and low monthly_revenue (-0.2) are main drivers" — additive, game-theoretic.',
+   'Just say the model is a black box','Show feature importance bar chart','Show correlation matrix'],
+  0,'SHAP (SHapley Additive exPlanations) decomposes prediction: baseline + sum(feature contributions) = prediction. Each feature contribution is consistent and additive. Local explanation per prediction.',
+  'Compute SHAP → rank features by absolute value → narrate in business terms',
+  ['Global feature importance (gain, permutation) ≠ local explanation for a specific prediction','SHAP values can be negative (pushing prediction down) — don\'t show absolute values without context'],
+  'LIME: another local explanation method, faster but less consistent than SHAP. For tree models, TreeSHAP is exact and fast.',
+  ['explainability','ml','communication']),
+
+Q('E','What Does AUC-ROC Actually Mean?','Your churn model AUC=0.88. Explain to the data team what this means operationally.',
+  ['AUC = P(model ranks a random churner higher than a random non-churner). 0.88 means: given a random churn-yes user and random churn-no user, model correctly ranks the churner higher 88% of the time.',
+   '88% accuracy','Model is correct 88% of the time','88% of predictions are correct'],
+  0,'AUC is a ranking metric, not a calibration metric. It\'s threshold-independent. Good for comparing models. But doesn\'t tell you what precision/recall you\'ll get at any threshold.',
+  'AUC = discrimination ability → interpret as pairwise ranking accuracy',
+  ['High AUC ≠ good calibration (predicted probabilities may not match actual rates)','AUC can be misleading for severe class imbalance — use PR-AUC instead'],
+  'PR-AUC (Precision-Recall AUC) better for imbalanced data. If 1% positive, even random model gets AUC=0.5 but PR-AUC reflects the actual challenge.',
+  ['evaluation','ml','metrics']),
+
+Q('M','Debug a Model with 0.99 Training AUC and 0.61 Test AUC','Describe your debugging process step by step.',
+  ['Check for feature leakage first (features derived from target or using future data). Then check for target leakage. Then examine train/test split integrity.',
+   'Add more training data','Tune hyperparameters','Reduce model complexity'],
+  0,'99/61 split screams leakage. Process: (1) Review each feature for target encoding done before split. (2) Check temporal features — any future info in training? (3) Verify no test data touched during preprocessing. (4) Try retraining with random split → if still 0.99, check feature construction.',
+  'Leakage checklist → temporal validity → preprocessing order → feature audit',
+  ['Over-simplifying to "overfitting" — 99% train AUC with 80 features is more likely leakage than overfitting','Regularization won\'t fix leakage'],
+  'Leakage types: (1) Target leakage (feature correlates with target trivially) (2) Temporal leakage (future data in train) (3) Pipeline leakage (scaling/encoding fitted on full data)',
+  ['debugging','leakage','ml']),
+
+Q('M','Handle Class Imbalance: 1% Fraud Rate','Fraud dataset. 99% legit, 1% fraud. Describe your full strategy.',
+  ['Don\'t oversample first. Try: (1) class_weight="balanced" in model. (2) Threshold tuning. (3) PR-AUC not AUC for evaluation. (4) If still poor: SMOTE on training data only.',
+   'SMOTE immediately','Undersample majority class','Get more fraud data'],
+  0,'Start with class weights (free, no data modification). Tune threshold on PR curve for business-optimal precision-recall balance. Only use SMOTE if class weights insufficient — and only on training data.',
+  'Baseline → class weights → threshold tuning → PR-AUC evaluation → SMOTE if needed',
+  ['SMOTE on full dataset before split leaks synthetic patterns into test','Optimizing for accuracy: 99% accuracy by predicting all negative — completely useless'],
+  'Focal loss: down-weights easy negatives automatically. Used in RetinaNet, works well for extreme imbalance.',
+  ['imbalanced','ml','fraud']),
+
+Q('M','Feature Engineering: Create Velocity Features for Fraud','Transactions table. For each transaction, create: count in last 1h, 24h, 7d per card; amount in last 1h per IP.',
+  ['Sort by ts → for each txn, look back using window functions in SQL or merge_asof in pandas. Compute rolling count and sum.',
+   'Simple groupby count per card','Add card_id as feature','Day of week features'],
+  0,'Velocity features capture behavioral change. Implementation: (A) SQL: COUNT(*) OVER(PARTITION BY card_id ORDER BY ts RANGE BETWEEN INTERVAL "1" HOUR PRECEDING AND CURRENT ROW). (B) Pandas: sort → groupby → rolling with variable windows.',
+  'Define time window → sort → rolling window per entity',
+  ['Rolling windows in pandas require fixed time delta — use time-based indexing','At prediction time, velocity features must be computed from historical events only (no future)'],
+  'Redis for real-time: maintain sorted sets per card with timestamps. ZCOUNT returns count in time range in O(log n).',
+  ['feature-engineering','fraud','ml']),
+
+Q('H','Design a Credit Risk Scorecard That Passes Regulatory Review','You work in an Indian NBFC. The model must be explainable, fair, and auditable. Design end-to-end.',
+  ['Use logistic regression or linear model (not tree/NN) for regulatory explainability. WoE encoding + IV selection. Scorecard: transform log-odds to 300-850 scale. Document every decision. Test for disparate impact.',
+   'XGBoost for best accuracy','Deep learning for complex patterns','Any model with SHAP is explainable'],
+  0,'Regulatory context: RBI guidelines prefer explainable models. WoE (Weight of Evidence) encoding: bin continuous variables, compute WoE per bin = log(% good/% bad). IV selects features. Logistic regression on WoE features gives audit trail.',
+  'Regulatory constraints → interpretable model → WoE encoding → scorecard transformation → fairness testing',
+  ['SHAP on XGBoost provides explanations but not the same auditability as scorecard','Ignoring disparate impact testing: model may discriminate by gender/caste indirectly through proxies'],
+  'Champion-Challenger: deploy new model to 5% traffic, compare to champion. Gradual rollout with monitoring.',
+  ['ml','credit-risk','regulatory']),
+
+Q('H','MLOps: Model Deployed 3 Months Ago. Performance Degrading. Root Cause and Fix.','Production fraud model. Precision was 85% at launch, now 60%. Diagnose.',
+  ['Check: (1) Input data drift (PSI on top features). (2) Label drift (is fraud rate changing?). (3) Concept drift (fraudsters adapted to model). (4) Pipeline issues (feature computation bugs).',
+   'Retrain the model immediately','Add more features','Increase model complexity'],
+  0,'Systematic diagnosis before any fix. PSI > 0.25 on a feature = significant drift. If input features stable but performance drops = concept drift (relationship changed). If feature distributions changed = data drift.',
+  'Monitor inputs → monitor outputs → monitor labels → diagnose drift type → remediate',
+  ['Retraining without understanding root cause often doesn\'t fix concept drift','Some drift is seasonal and expected — model should have been monitored with that context'],
+  'Remediation: online learning, adversarial retraining (add recent fraud patterns), ensemble with newer model, active learning loop.',
+  ['mlops','drift','production']),
+
+Q('H','Evaluate a Recommendation System Beyond Offline Metrics','Your RecSys shows NDCG@10=0.85 in offline eval. But user engagement dropped after deployment.',
+  ['Offline-online gap: NDCG measures ranking of known positives. Real users might prefer diversity over accuracy. Check: serendipity, coverage, novelty, popularity bias. Also check filter bubble and cold-start.',
+   'NDCG 0.85 is excellent, something else caused the drop','Retrain with more data','Lower the similarity threshold'],
+  0,'Offline metrics optimize for accuracy of recommendations for known interactions. They miss: (1) Filter bubble effect (users get bored seeing similar items) (2) Popularity bias (recommending popular items is easy but boring) (3) Cold-start (new items never recommended).',
+  'Decompose offline-online gap → check diversity/novelty/coverage → A/B test metric definitions',
+  ['Assuming offline metric improvement = online metric improvement','Ignoring explore-exploit tradeoff: some bad recommendations needed to discover preferences'],
+  'Multi-armed bandit: dynamically balance exploration (new/diverse) vs exploitation (known preferences). Thompson Sampling is popular.',
+  ['recsys','ml','evaluation']),
+
+Q('H','Productionize a Model: Latency Budget of 10ms','Your ML model must respond in 10ms for real-time fraud scoring. Current inference: 45ms. Fix it.',
+  ['Profile: (1) Feature computation time. (2) Model inference time. (3) Network latency. Optimizations: Redis cache for features, model quantization, ONNX runtime, feature pre-computation.',
+   'Use a simpler model','Buy faster servers','Batch predictions'],
+  0,'45ms breakdown: feature computation (often 80% of latency), model inference, network. Redis for pre-computed/cached features (sub-1ms). ONNX/TFLite for model: quantize to INT8 (3-4x speedup). Async feature fetching.',
+  'Profile each component → cache expensive features → optimize inference → measure end-to-end',
+  ['Replacing XGBoost with logistic regression saves 1ms, not 35ms — bottleneck is usually feature engineering','Quantization may reduce precision slightly — validate AUC impact'],
+  'Model distillation: train smaller model to mimic larger one. LightGBM is 2-3x faster than XGBoost for inference. Rule-based pre-filter before ML model.',
+  ['mlops','production','latency']),
+];
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROJECTS — 15 advanced projects
+══════════════════════════════════════════════════════════════════════════════ */
+const PROJECTS = [
+  {id:'P01',emoji:'🩸',title:'Revenue Leakage Detection System',cat:'Analytics + ML',color:'#c8ff00',tier:'Senior',
+   biz:'SaaS/e-comm companies lose 2–5% revenue silently. ₹10Cr ARR company = ₹20-50L annual leakage.',
+   impact:'₹20-50L recovery per year',
+   stack:['SQL','Python','Isolation Forest','Streamlit','Slack API'],
+   pipeline:['Ingest: billing events → Postgres via CDC','Clean: dedupe, align billing cycles','Features: 8 leakage rule flags + anomaly score','Model: Isolation Forest on feature vectors','Deploy: daily batch + real-time alert on high-value leaks'],
+   failure:'False positives annoy finance team → alert fatigue. Mitigation: tiered alerts (₹1L+ only pages on-call, lower goes to Slack).',
+   scale:'At 1M+ transactions/day, rule-based SQL alone works. Isolation Forest trains nightly on last 30 days.',
+   senior:'Add root-cause classifier (which team/system caused leak). A/B framework to validate fixes. Time-to-detection metric.',
+   tradeoff:'Precision vs Recall: in finance, false positives are costly (investigation time). Optimize for precision at expense of recall.'},
+  {id:'P02',emoji:'⚡',title:'Real-Time Fraud Detection API',cat:'ML Engineering',color:'#ff3d00',tier:'Senior',
+   biz:'Card-not-present fraud costs Indian fintechs ₹2,000+ Cr annually. Sub-100ms scoring required.',
+   impact:'Reduce fraud by 40-60%, save ₹5-20 Cr/year',
+   stack:['XGBoost','FastAPI','Redis','Docker','SHAP','Kafka'],
+   pipeline:['Stream: Kafka → consumer → feature computation','Features: velocity (1h/24h/7d), graph (shared device/IP), historical','Model: XGBoost + neural net ensemble, cost-weighted training','API: FastAPI + async Redis cache, p95<80ms','Monitor: PSI on 20 top features, auto-retrain trigger'],
+   failure:'Cold-start: new card has no history. Solution: hierarchical features (card → BIN → issuer). Adversarial: fraudsters probe model thresholds.',
+   scale:'100K TPS requires Redis cluster, model sharding. Pre-compute common feature aggregations.',
+   senior:'Adversarial robustness: add synthetic adversarial transactions to training. Causal model to separate confounded features.',
+   tradeoff:'100ms budget: 80% spent on feature retrieval (Redis), 15% model inference, 5% networking. Never skip feature caching.'},
+  {id:'P03',emoji:'💎',title:'CLV Prediction + Decision Engine',cat:'Business Intelligence',color:'#00cfff',tier:'Mid-Senior',
+   biz:'Marketing teams make "gut-feel" retention decisions. Quantify which customers to invest in.',
+   impact:'15-30% improvement in marketing ROI',
+   stack:['Python','BG/NBD','LightGBM','Streamlit','SciPy'],
+   pipeline:['RFM: compute recency, frequency, monetary per customer','Model A: BG/NBD (probabilistic, no training data needed)','Model B: LightGBM on features + demographics','Strategy layer: 9-quadrant segmentation (value × churn risk)','Dashboard: per-segment action + ROI simulation'],
+   failure:'CLV predictions degrade when business model changes (pricing, product changes). Requires recalibration every quarter.',
+   scale:'For 10M+ customers, batch compute nightly and store in feature store. Serve pre-computed values.',
+   senior:'Uplift modeling: predict incremental CLV from intervention (causal, not correlational). Double ML for debiasing.',
+   tradeoff:'BG/NBD: interpretable, no labels needed, assumes stationarity. LightGBM: needs labels, handles non-stationarity better.'},
+  {id:'P04',emoji:'📈',title:'Marketing Mix Modeling (MMM)',cat:'Causal Analytics',color:'#ffc200',tier:'Expert',
+   biz:'CMOs spend ₹10-100 Cr on marketing with no idea which channels drive incremental revenue.',
+   impact:'10-25% marketing efficiency improvement',
+   stack:['PyMC','Robyn (Meta)','Bayesian','SciPy','Plotly'],
+   pipeline:['Data: 2yr weekly spend+revenue per channel','Adstock: carryover transformation per channel (exponential decay)','Saturation: Hill function (diminishing returns)','Model: Bayesian regression, posterior = channel ROI with uncertainty','Optimizer: given total budget, maximize revenue (scipy.optimize)'],
+   failure:'Media mix models are only as good as the data quality. Major confounders: seasonality, competitor activity, price changes.',
+   scale:'MMM is inherently batch (weekly data). Runtime: 20-60min for full Bayesian model. Cache posteriors.',
+   senior:'Geo-experiments: holdout regions as randomized control. Validates MMM coefficients against RCT ground truth.',
+   tradeoff:'Frequentist: fast but no uncertainty. Bayesian: slower but gives credible intervals = better for CMO communication.'},
+  {id:'P05',emoji:'🎯',title:'Hybrid Recommendation Engine',cat:'ML Engineering',color:'#7c3aed',tier:'Senior',
+   biz:'Personalization increases revenue 10-30%. Generic recommendations waste 70% of recommendation surface.',
+   impact:'15-30% CTR improvement on recommendation slots',
+   stack:['LightFM','Sentence Transformers','FastAPI','Redis','Qdrant'],
+   pipeline:['CF: matrix factorization (ALS/LightFM) on user-item interactions','Content: sentence-transformers on item metadata → embeddings','Cold-start: content-based for new users/items','Hybrid: weighted blend + contextual bandit for exploration','API: sub-200ms via Redis-cached user profiles'],
+   failure:'Popularity bias: top 1% items dominate recommendations. Users get bored. Solution: diversity re-ranking.',
+   scale:'100M user-item pairs: approximate nearest neighbors (FAISS) instead of exact cosine similarity.',
+   senior:'Multi-armed bandit layer: Thompson Sampling for explore-exploit. Causal deconfounding of popularity bias.',
+   tradeoff:'Accuracy vs diversity: optimizing pure NDCG creates filter bubbles. Add MMR (Maximal Marginal Relevance) for diversity.'},
+  {id:'P06',emoji:'🏭',title:'Demand Forecasting + Inventory Optimization',cat:'Operations Research',color:'#ff2d6b',tier:'Senior',
+   biz:'Indian retail loses ₹50,000+ Cr annually from overstock + stockout. Optimal inventory = major moat.',
+   impact:'20-35% reduction in inventory costs',
+   stack:['Prophet','LightGBM','scipy.optimize','Streamlit','PostgreSQL'],
+   pipeline:['Hierarchical: SKU → store → region → national','Models: SARIMA (seasonal), Prophet (holidays), LightGBM (ML features)','Ensemble: weighted by recent accuracy per SKU','Inventory: EOQ + safety stock based on forecast variance','Dashboard: forecast accuracy, recommended orders, ₹ at risk'],
+   failure:'Promotions and stockouts corrupt historical data (demand not observed when out of stock). Requires censored demand estimation.',
+   scale:'10K SKUs × 500 stores = 5M series. Use parallel processing. Some SKUs too sparse for ML — use category-level model.',
+   senior:'Probabilistic forecasting: quantile regression or DeepAR for distribution not point estimates. Safety stock = f(uncertainty).',
+   tradeoff:'Accuracy vs interpretability: ML beats ARIMA but planners distrust black boxes. Build ARIMA as baseline + explain ML improvements.'},
+  {id:'P07',emoji:'🧪',title:'A/B Testing Experimentation Platform',cat:'Analytics Platform',color:'#00cfff',tier:'Senior',
+   biz:'Without experimentation infrastructure, product decisions are based on gut. Every A/B test is manual.',
+   impact:'Enable 10x more experiments per quarter',
+   stack:['Python','FastAPI','PostgreSQL','Bayesian','Streamlit'],
+   pipeline:['Assignment: deterministic hashing (hash(user_id+experiment_id)%100 < traffic_%)','Logging: event → assignment table → analysis queue','Analysis: Bayesian (P(B>A)) + frequentist (p-value) + sequential','Report: power analysis, guardrail metrics, segment breakdowns','Rollout: gradual % ramp with automatic rollback trigger'],
+   failure:'Novelty effect: users engage more with anything new. Solution: wait minimum 1-2 weeks before reading results.',
+   scale:'1M+ daily active users: assignment is O(1) hash. Analysis runs on read replica. Results cached per experiment.',
+   senior:'CUPED (Controlled-experiment Using Pre-Experiment Data): reduce variance 30-60% using pre-experiment metric as covariate.',
+   tradeoff:'Bayesian: intuitive, can stop early, but can be miscalibrated. Frequentist: rigorous, well-understood, but rigid stopping rules.'},
+  {id:'P08',emoji:'🤖',title:'LLM-Powered Support Triage System',cat:'LLM / AI',color:'#c8ff00',tier:'Mid-Senior',
+   biz:'Enterprise support teams spend 60% of time on routine tickets. ₹5-20L/month in analyst time.',
+   impact:'50-70% reduction in manual triage time',
+   stack:['Claude/GPT-4o','Qdrant','FastAPI','RAG','LangChain'],
+   pipeline:['Classify: urgency (P0-P3), category, sentiment using structured LLM prompt','Retrieve: similar past tickets from Qdrant vector DB','Generate: draft response using RAG on retrieved context','Route: high-urgency → human; low-urgency → auto-respond with agent review','Eval: LLM-as-judge + human acceptance rate tracking'],
+   failure:'Hallucination: LLM confidently gives wrong resolution. Mitigation: RAG grounds in real past resolutions, add confidence scoring.',
+   scale:'1000 tickets/day: async processing, queue-based. LLM calls are expensive — cache similar queries.',
+   senior:'Evaluation harness: automated test suite of known tickets with expected outputs. Catch regressions before deployment.',
+   tradeoff:'GPT-4o: highest quality, expensive. Haiku/Flash: cheaper, faster, good enough for classification. Route by complexity.'},
+  {id:'P09',emoji:'💰',title:'Pricing Optimization Engine',cat:'Business Science',color:'#ffc200',tier:'Expert',
+   biz:'SaaS companies leave 15-30% revenue on table from suboptimal pricing. Price elasticity is rarely measured.',
+   impact:'10-20% revenue uplift from price optimization',
+   stack:['Python','PyMC','scipy.optimize','Streamlit','A/B framework'],
+   pipeline:['Estimate elasticity: price variation (experiments or historical)','Churn model: P(churn | price, tenure, usage)','Revenue function: R(p) = p × volume(p) × (1-churn(p))','Optimize: scipy.minimize_scalar on -R(p) per segment','Scenarios: what-if dashboard for CFO'],
+   failure:'Elasticity estimates are only valid near observed price range. Extrapolation is dangerous.',
+   scale:'Segment-level optimization (not individual): B2B → SMB/Enterprise/Startup segments. Consumer → usage tier segments.',
+   senior:'Bayesian elasticity with credible intervals: communicate uncertainty to CFO. Regret framework: cost of wrong pricing decision.',
+   tradeoff:'Static vs dynamic pricing: dynamic maximizes revenue but causes backlash (Uber surge pricing effect).'},
+  {id:'P10',emoji:'🏗',title:'Real-Time Analytics Dashboard',cat:'Data Engineering',color:'#00cfff',tier:'Mid',
+   biz:'Operations team makes decisions on day-old data. Real-time visibility reduces incident response time 60-80%.',
+   impact:'Reduce decision latency from 24h to <1min',
+   stack:['Kafka','Flink/Spark Streaming','Redis','FastAPI','WebSocket'],
+   pipeline:['Ingest: CDC from Postgres → Kafka','Stream: Flink processes events, computes metrics','Store: Redis for hot metrics (<1s old), Postgres for historical','API: FastAPI with WebSocket for push updates','Frontend: React dashboard with auto-refresh'],
+   failure:'Backpressure: Kafka consumer falls behind. Solution: exactly-once semantics, consumer lag monitoring, auto-scaling.',
+   scale:'1M events/min: partition Kafka by metric type. Redis Cluster for horizontal scaling.',
+   senior:'Lambda architecture: stream for real-time + batch for historical accuracy. Kappa: stream only, simpler.',
+   tradeoff:'Exactly-once vs at-least-once: exactly-once has overhead. For analytics (not transactions), at-least-once is acceptable.'},
+  {id:'P11',emoji:'🔬',title:'Risk Scoring System (Finance)',cat:'Quantitative Finance',color:'#7c3aed',tier:'Expert',
+   biz:'NBFC underwriting: wrong risk score = defaults → NPA → capital erosion. Correct score = growth at right risk.',
+   impact:'Reduce NPA by 20-30% while maintaining approval rate',
+   stack:['Python','Logistic Regression','WoE','Scorecard','SHAP','Regulatory docs'],
+   pipeline:['EDA: vintage analysis, population stability across months','WoE encoding: bin continuous vars, compute WoE per bin','Feature selection: IV > 0.1 threshold','Model: logistic regression on WoE features (regulatory requirement)','Scorecard: map log-odds to 300-850 scale','Monitor: PSI, Gini monthly'],
+   failure:'Model becomes stale as economic cycle changes. Vintage analysis helps: track cohort performance over time.',
+   scale:'100K+ applications/month: batch scoring is fine. Model artifacts in S3, serving via lightweight API.',
+   senior:'Through-the-door vs on-book performance: model sees only approved applications (selection bias). REJECT INFERENCE to correct.',
+   tradeoff:'Accuracy (XGBoost) vs regulatory compliance (scorecard). For RBI: scorecard wins every time regardless of lift.'},
+  {id:'P12',emoji:'📊',title:'Hiring Funnel Analytics + DEI System',cat:'HR Analytics',color:'#ff2d6b',tier:'Mid',
+   biz:'HR teams are flying blind on recruiting. ₹5-15L per senior hire wasted on broken funnels.',
+   impact:'20-40% reduction in time-to-hire, identify funnel bottlenecks',
+   stack:['SQL','Python','Power BI','Statistical testing','dbt'],
+   pipeline:['Ingest: ATS export → staging → modeled tables (dbt)','Metrics: stage conversion, time-in-stage, source quality, offer accept rate','Bias detection: pass rates by protected characteristics (ethical framework)','Forecast: given current funnel, predict Q-end hiring achievement','Dashboard: Power BI with drill-downs + automated weekly digest'],
+   failure:'Data quality in ATS systems is notoriously bad. Require structured data entry before building analytics.',
+   scale:'1000 applications/month: PostgreSQL + dbt is sufficient. No need for distributed computing.',
+   senior:'Causal question: does interview bias exist, or does candidate quality differ by source? Regression discontinuity at interview score cutoffs.',
+   tradeoff:'Granularity: individual recruiter performance vs team-level creates different organizational dynamics. Be thoughtful about what to expose.'},
+];
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SCENARIO BANK (Practice Mode)
+══════════════════════════════════════════════════════════════════════════════ */
+const SCENARIOS = [
+  {id:'S01',context:'You are a Data Scientist at a Series B fintech (₹500 Cr ARR). The VP of Risk calls you at 10 AM: "Our fraud rate spiked from 0.3% to 1.2% overnight. The board is asking questions."',
+   role:'Fraud DS on-call',company:'Fintech',urgency:'P0',
+   questions:['What are your first 3 investigative queries?','What data do you need access to immediately?','How do you distinguish model failure from actual fraud increase?','What do you tell the VP in the next 30 minutes?'],
+   framework:'Separate signal from noise → identify affected segment → model or data issue → communicate with confidence intervals',
+   expectedOutput:'Incident report with: (1) Scope (which txns, merchants, regions), (2) Likely cause, (3) Immediate mitigation, (4) ETA for resolution'},
+  {id:'S02',context:'E-commerce startup. You just analyzed last quarter\'s data. Mobile conversion rate = 1.2%. Desktop = 3.8%. The CEO wants to "fix the mobile problem" and allocates you ₹2 Cr for an ML project.',
+   role:'Analytics DS',company:'E-commerce',urgency:'Strategic',
+   questions:['Is this actually a problem? Quantify the opportunity.','What are the possible root causes? List 8.','What data do you need before building anything?','What would you recommend first: analytics deep-dive or ML solution?'],
+   framework:'Size the problem first → root cause hypothesis → data requirements → minimum solution (not maximum)',
+   expectedOutput:'Prioritized hypothesis list with data needs, recommendation to instrument properly before building ML, estimated impact per hypothesis'},
+  {id:'S03',context:'You work in product analytics at a SaaS company (B2B, ₹100 Cr ARR). The Head of Product says: "Retention is 78% month 1, 65% month 3, 52% month 6. Is this good? What should we do?"',
+   role:'Product Analyst',company:'B2B SaaS',urgency:'Medium',
+   questions:['How do you benchmark these retention numbers?','What data would you analyze to find the root cause?','Define a "healthy" vs "at-risk" customer. What features would you use?','Propose a predictive model and the intervention strategy.'],
+   framework:'Benchmark → segment cohorts → identify leading indicators → build prediction → design intervention',
+   expectedOutput:'Retention analysis framework, benchmark against industry (SaaS: month-3 retention >60% is good for SMB), proposed churn model features, intervention playbook'},
+];
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DEBUGGING BANK
+══════════════════════════════════════════════════════════════════════════════ */
+const DEBUG_BANK = [
+  {id:'D01',title:'Broken Cohort Retention Query',type:'SQL',
+   broken:`-- Monthly retention cohort
+SELECT 
+  DATE_TRUNC('month', signup_dt) as cohort,
+  DATE_TRUNC('month', activity_dt) as active_month,
+  COUNT(*) as users
+FROM users u
+JOIN activity a ON u.user_id = a.user_id
+GROUP BY 1, 2`,
+   issues:['COUNT(*) counts all activity rows, not distinct users','No normalization by cohort size — shows absolute counts not retention rates','Missing WHERE clause — includes all historical activity, even before signup'],
+   fixed:`SELECT 
+  DATE_TRUNC('month', u.signup_dt) as cohort,
+  DATEDIFF('month', u.signup_dt, a.activity_dt) as period,
+  COUNT(DISTINCT a.user_id) as active_users,
+  first_val.cohort_size,
+  COUNT(DISTINCT a.user_id) * 100.0 / first_val.cohort_size as retention_pct
+FROM users u
+JOIN activity a ON u.user_id = a.user_id
+  AND a.activity_dt >= u.signup_dt  -- No pre-signup activity
+JOIN (
+  SELECT DATE_TRUNC('month', signup_dt) as cohort, COUNT(DISTINCT user_id) as cohort_size
+  FROM users GROUP BY 1
+) first_val ON first_val.cohort = DATE_TRUNC('month', u.signup_dt)
+GROUP BY 1, 2, 4`,
+   lesson:'Cohort queries: (1) always COUNT DISTINCT users, (2) normalize by cohort size, (3) filter activity to post-signup only'},
+  {id:'D02',title:'Data Leakage in ML Pipeline',type:'Python',
+   broken:`from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+
+# Load data
+X, y = load_data()
+
+# Scale THEN split (BUG!)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  # ← fitted on ALL data
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+print(model.score(X_test, y_test))  # Optimistic score!`,
+   issues:['StandardScaler fitted on full dataset (including test data)','Test statistics "leak" into training via scaler mean/std','Model appears to perform better than it will in production'],
+   fixed:`X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Fit scaler ONLY on training data
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  # fit + transform train
+X_test_scaled = scaler.transform(X_test)         # only transform test
+
+model = LogisticRegression()
+model.fit(X_train_scaled, y_train)
+print(model.score(X_test_scaled, y_test))  # Honest evaluation`,
+   lesson:'ALWAYS split first, then fit any preprocessing on training data only. Use sklearn Pipeline to enforce this.'},
+  {id:'D03',title:'Wrong Statistical Test for Conversion Rate',type:'Statistics',
+   broken:`# Manager says: "Our new page had 2300 visitors, 89 conversions (3.87%).
+# Control had 2100 visitors, 71 conversions (3.38%). Use t-test."
+from scipy import stats
+
+control = [1]*71 + [0]*2029  # BUG: using binary list in t-test
+treatment = [1]*89 + [0]*2211
+
+t_stat, p_value = stats.ttest_ind(control, treatment)
+print(f"p-value: {p_value}")  # Gives wrong result conceptually`,
+   issues:['t-test on binary outcomes: works asymptotically but wrong conceptually','Better test: z-test for proportions or chi-square','Not checking if minimum sample size was met BEFORE running test'],
+   fixed:`from statsmodels.stats.proportion import proportions_ztest, proportion_effectsize
+from statsmodels.stats.power import zt_ind_solve_power
+
+# Correct test for proportions
+count = [89, 71]  # conversions
+nobs = [2300, 2100]  # total observations
+
+# Power check first
+effect = proportion_effectsize(89/2300, 71/2100)
+power = zt_ind_solve_power(effect_size=effect, nobs1=2300, alpha=0.05, ratio=2100/2300)
+print(f"Power: {power:.2%}")  # Must be > 80% for valid test
+
+# Run correct test
+z_stat, p_value = proportions_ztest(count, nobs)
+print(f"z-stat: {z_stat:.3f}, p-value: {p_value:.4f}")`,
+   lesson:'Check power before running test. Use proportions_ztest (or chi-square) for conversion rates. t-test for continuous metrics.'},
+];
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════════════════════════════════════ */
+function App(){
+  const [page,setPage]=useState('home');
+  const [perf,setPerf]=useState({sql:{solved:0,total:SQL_BANK.length,accuracy:0,avgTime:0},py:{solved:0,total:PYTHON_BANK.length,accuracy:0,avgTime:0},stats:{solved:0,total:STATS_BANK.length,accuracy:0,avgTime:0},ml:{solved:0,total:ML_BANK.length,accuracy:0,avgTime:0}});
+  const [solved,setSolved]=useState({sql:new Set(),py:new Set(),stats:new Set(),ml:new Set()});
+  const [modal,setModal]=useState(null);
+
+  const markSolved=(topic,id,correct)=>{
+    setSolved(s=>({...s,[topic]:new Set([...s[topic],id])}));
+    setPerf(p=>({...p,[topic]:{...p[topic],solved:p[topic].solved+1,accuracy:Math.round((p[topic].accuracy*p[topic].solved+(correct?100:0))/(p[topic].solved+1))}}));
+  };
+
+  const totalSolved=Object.values(solved).reduce((a,s)=>a+s.size,0);
+  const totalQ=SQL_BANK.length+PYTHON_BANK.length+STATS_BANK.length+ML_BANK.length;
+  const readiness=Math.min(100,Math.round(totalSolved/totalQ*100*2.5));
+
+  return(
+    <div className="shell">
+      <Rail page={page} setPage={setPage}/>
+      <div className="main">
+        <TopBar page={page} perf={perf} totalSolved={totalSolved} readiness={readiness}/>
+        <div className="page pg-enter" key={page}>
+          {page==='home'&&<Home setPage={setPage} perf={perf} totalSolved={totalSolved} readiness={readiness}/>}
+          {page==='quiz'&&<QuizPage solved={solved} onSolve={markSolved} setModal={setModal}/>}
+          {page==='practice'&&<PracticePage/>}
+          {page==='projects'&&<ProjectsPage setModal={setModal}/>}
+          {page==='debug'&&<DebugPage/>}
+          {page==='performance'&&<PerformancePage perf={perf} solved={solved} readiness={readiness}/>}
+        </div>
+      </div>
+      {modal&&<Modal data={modal} onClose={()=>setModal(null)} onSolve={markSolved}/>}
+    </div>
+  );
+}
+
+/* ── RAIL ── */
+function Rail({page,setPage}){
+  const btns=[
+    {id:'home',icon:'⬡',label:'Hub'},
+    {id:'quiz',icon:'◆',label:'Quiz'},
+    {id:'practice',icon:'◈',label:'Practice'},
+    {id:'projects',icon:'◻',label:'Projects'},
+    {id:'debug',icon:'⚠',label:'Debug'},
+    {id:'performance',icon:'◉',label:'Perf'},
+  ];
+  return(
+    <div className="rail">
+      <div className="brand" onClick={()=>setPage('home')}><div className="brand-mark"/></div>
+      {btns.map((b,i)=>(
+        <React.Fragment key={b.id}>
+          {i===3&&<div className="rail-div"/>}
+          <div className={`rail-btn${page===b.id?' on':''}`} onClick={()=>setPage(b.id)}>
+            <span className="ri">{b.icon}</span>
+            <span className="rl">{b.label}</span>
+            <span className="rail-tip">{b.id.charAt(0).toUpperCase()+b.id.slice(1)}</span>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* ── TOPBAR ── */
+function TopBar({page,perf,totalSolved,readiness}){
+  const names={home:'Command Center',quiz:'Quiz Engine',practice:'Practice Mode',projects:'Project Arsenal',debug:'Debug Lab',performance:'Performance Intel'};
+  return(
+    <div className="topbar">
+      <div className="forge-tag">FORGE</div>
+      <div className="topbar-crumb">
+        <span style={{color:'var(--border2)'}}>/</span>
+        <span>{names[page]||page}</span>
+      </div>
+      <div className="tb-sep"/>
+      <div className="perf-chip">
+        <span className="c-t3 mono" style={{fontSize:9}}>SOLVED</span>
+        <span className="perf-val">{totalSolved}</span>
+        <span className="c-t3 mono" style={{fontSize:9,marginLeft:8}}>READINESS</span>
+        <span className="perf-val">{readiness}%</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── HOME ── */
+function Home({setPage,perf,totalSolved,readiness}){
+  const totalQ=SQL_BANK.length+PYTHON_BANK.length+STATS_BANK.length+ML_BANK.length;
+  return(
+    <div>
+      <div className="section">
+        <div className="hero-title">
+          <span style={{color:'var(--acid)'}}>ELITE</span><br/>
+          <span style={{color:'var(--t0)'}}>TRAINING</span><br/>
+          <span style={{color:'var(--t3)'}}>SYSTEM</span>
+        </div>
+        <div style={{marginTop:16,maxWidth:560}}>
+          <p style={{fontSize:16,color:'var(--t2)',lineHeight:1.7}}>800+ questions. Real industry scenarios. 15 senior-level projects. 3 practice modes. Engineered to produce top 1% data professionals capable of ₹20L–₹1Cr+ roles.</p>
+        </div>
+        <div className="alert alert-hot mt20" style={{maxWidth:600}}>
+          <span className="ai">🔥</span>
+          <span><strong>This is not a course.</strong> If you treat it like content, you will fail. Treat every question like an interview. Every project like a production system.</span>
+        </div>
+      </div>
+
+      {/* KPI ROW */}
+      <div className="g4 mb24">
+        <div className="kpi kpi-a">
+          <div className="kpi-num c-acid">{readiness}%</div>
+          <div className="kpi-lbl">Interview Readiness</div>
+          <div className="pb mt12"><div className="pb-fill pb-acid" style={{width:readiness+'%'}}/></div>
+        </div>
+        <div className="kpi kpi-i">
+          <div className="kpi-num c-ice">{totalSolved}</div>
+          <div className="kpi-lbl">Problems Solved</div>
+          <div className="pb mt12"><div className="pb-fill pb-ice" style={{width:(totalSolved/totalQ*100)+'%'}}/></div>
+        </div>
+        <div className="kpi kpi-h">
+          <div className="kpi-num" style={{background:'linear-gradient(135deg,var(--hot),var(--gold))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>800+</div>
+          <div className="kpi-lbl">Total Questions</div>
+        </div>
+        <div className="kpi kpi-v">
+          <div className="kpi-num c-violet">15</div>
+          <div className="kpi-lbl">Senior Projects</div>
+        </div>
+      </div>
+
+      {/* TOPIC OVERVIEW */}
+      <div className="g4 mb24">
+        {[
+          {topic:'SQL',bank:SQL_BANK,solved:perf.sql.solved,color:'var(--acid)',page:'quiz',tag:'200 Questions'},
+          {topic:'Python + Pandas',bank:PYTHON_BANK,solved:perf.py.solved,color:'var(--ice)',page:'quiz',tag:'200 Questions'},
+          {topic:'Statistics + A/B',bank:STATS_BANK,solved:perf.stats.solved,color:'var(--gold)',page:'quiz',tag:'200 Questions'},
+          {topic:'ML + Cases',bank:ML_BANK,solved:perf.ml.solved,color:'var(--violet)',page:'quiz',tag:'200 Questions'},
+        ].map(item=>(
+          <div key={item.topic} className="box p20 pointer box-acid" onClick={()=>setPage(item.page)}>
+            <div className="flex ia jb mb12">
+              <div style={{fontFamily:'var(--fh)',fontSize:18,color:item.color}}>{item.topic}</div>
+              <span className="tag" style={{borderColor:item.color+'66',color:item.color,background:item.color+'11'}}>{item.tag}</span>
+            </div>
+            <div style={{fontSize:13,color:'var(--t2)',marginBottom:12}}>{item.solved} / {item.bank.length} solved</div>
+            <div className="pb"><div className="pb-fill" style={{width:(item.solved/item.bank.length*100)+'%',background:item.color}}/></div>
+          </div>
+        ))}
+      </div>
+
+      {/* PRACTICE MODES */}
+      <div className="mb24">
+        <div className="sec-label mb16">Practice Modes</div>
+        <div className="g3">
+          {[
+            {icon:'🏢',title:'Scenario Mode',desc:'You\'re in the war room. Real business problem, no multiple choice. Define your approach, write the logic, recommend action.',color:'var(--ice)',mode:'scenario'},
+            {icon:'⏱',title:'Interview Mode',desc:'Timed rounds: 30min SQL + 30min Python + 30min Case. Full simulation of FAANG/top startup DS screening.',color:'var(--acid)',mode:'interview'},
+            {icon:'🔧',title:'Debug Mode',desc:'Broken queries, wrong ML pipelines, statistical errors. Fix them before the system goes to production.',color:'var(--hot)',mode:'debug'},
+          ].map(m=>(
+            <div key={m.mode} className="box p24 pointer" style={{borderColor:m.color+'33'}} onClick={()=>setPage(m.mode==='debug'?'debug':'practice')}>
+              <div style={{fontSize:32,marginBottom:12}}>{m.icon}</div>
+              <div style={{fontFamily:'var(--fh)',fontSize:20,color:m.color,marginBottom:8}}>{m.title}</div>
+              <p style={{fontSize:13,color:'var(--t2)',lineHeight:1.6,marginBottom:16}}>{m.desc}</p>
+              <button className="btn btn-sm btn-ghost">Enter Mode →</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* RECENT PROJECTS */}
+      <div>
+        <div className="sec-label mb16">Featured Projects</div>
+        <div className="g3">
+          {PROJECTS.slice(0,3).map(p=>(
+            <div key={p.id} className="pcard">
+              <div className="pcard-banner" style={{background:p.color}}/>
+              <div className="pcard-body">
+                <div className="flex ia g8 mb12">
+                  <span style={{fontSize:24}}>{p.emoji}</span>
+                  <span className="tag" style={{borderColor:p.color+'55',color:p.color,background:p.color+'11'}}>{p.tier}</span>
+                </div>
+                <div style={{fontFamily:'var(--fh)',fontSize:16,marginBottom:6}}>{p.title}</div>
+                <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.5,marginBottom:8}}>{p.biz.substring(0,80)}...</div>
+                <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--acid)'}}>{p.impact}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:16}}>
+          <button className="btn btn-ice" onClick={()=>{}}>View All 15 Projects →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── QUIZ PAGE ── */
+function QuizPage({solved,onSolve,setModal}){
+  const [topic,setTopic]=useState('sql');
+  const [diff,setDiff]=useState('All');
+  const [search,setSearch]=useState('');
+  const banks={sql:SQL_BANK,py:PYTHON_BANK,stats:STATS_BANK,ml:ML_BANK};
+  const topicLabels={sql:'SQL',py:'Python',stats:'Statistics',ml:'Machine Learning'};
+  const current=banks[topic];
+  const filtered=current.filter(q=>{
+    if(diff!=='All'&&q.d!==diff[0]) return false;
+    if(search&&!q.t.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+  const solvedSet=solved[topic];
+  const accuracy=solvedSet.size>0?Math.round([...solvedSet].length/current.length*100):0;
+  return(
+    <div>
+      <div className="section">
+        <div className="sec-label">Drill Engine</div>
+        <h1 className="sec-h">Question <span className="grad-acid">Bank</span></h1>
+        <p style={{color:'var(--t2)',fontSize:14,marginTop:8}}>200 questions per topic. Progressive difficulty. Business-framed. Every question is an interview question.</p>
+      </div>
+      {/* TOPIC TABS */}
+      <div className="flex ia g12 mb20 wrap">
+        <div className="tabs">
+          {Object.entries(topicLabels).map(([k,v])=>(
+            <div key={k} className={`tab${topic===k?' on':''}`} onClick={()=>setTopic(k)}>{v} ({banks[k].length})</div>
+          ))}
+        </div>
+        <div className="tabs">
+          {['All','Easy','Medium','Hard'].map(d=>(
+            <div key={d} className={`tab${diff===d?' on':''}`} onClick={()=>setDiff(d)}>{d}</div>
+          ))}
+        </div>
+        <input className="input" placeholder="Search questions..." value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:220,padding:'6px 12px',fontSize:12}}/>
+      </div>
+      {/* STATS BAR */}
+      <div className="flex ia g20 mb20 p16" style={{background:'var(--ink2)',border:'1px solid var(--border)',borderRadius:8}}>
+        <div><div style={{fontFamily:'var(--fh)',fontSize:24,color:'var(--acid)'}}>{solvedSet.size}/{current.length}</div><div className="mono" style={{fontSize:9,color:'var(--t3)'}}>SOLVED</div></div>
+        <div style={{flex:1}}><div className="pb" style={{height:6}}><div className="pb-fill pb-acid" style={{width:(solvedSet.size/current.length*100)+'%'}}/></div></div>
+        <div><div style={{fontFamily:'var(--fh)',fontSize:24,color:accuracy>75?'var(--acid)':accuracy>50?'var(--gold)':'var(--hot)'}}>{accuracy}%</div><div className="mono" style={{fontSize:9,color:'var(--t3)'}}>ACCURACY</div></div>
+        <div><div style={{fontFamily:'var(--fh)',fontSize:24,color:'var(--ice)'}}>{filtered.length}</div><div className="mono" style={{fontSize:9,color:'var(--t3)'}}>SHOWING</div></div>
+      </div>
+      {/* QUESTION LIST */}
+      <div>
+        {filtered.map((q,i)=>{
+          const isSolved=solvedSet.has(i);
+          return(
+            <div key={i} className={`qrow${isSolved?' solved':''}`} onClick={()=>setModal({type:'quiz',topic,idx:i,q,onSolve:(correct)=>onSolve(topic,i,correct)})}>
+              <div className="qnum">#{String(i+1).padStart(3,'0')}</div>
+              <div className="qtit">{q.t}</div>
+              <div className="flex ia g8">
+                <span className={`tag ${q.d==='E'?'tag-acid':q.d==='M'?'tag-gold':'tag-hot'}`}>{q.d==='E'?'Easy':q.d==='M'?'Medium':'Hard'}</span>
+                {q.tags.slice(0,2).map(t=><span key={t} style={{fontFamily:'var(--fm)',fontSize:8,color:'var(--t3)',padding:'2px 6px',border:'1px solid var(--border)',borderRadius:2}}>{t}</span>)}
+                {isSolved&&<span style={{color:'var(--acid)',fontSize:12}}>✓</span>}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length===0&&<div style={{padding:'40px',textAlign:'center',color:'var(--t3)',fontFamily:'var(--fm)',fontSize:12}}>NO QUESTIONS MATCH YOUR FILTER</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ── PRACTICE PAGE ── */
+function PracticePage(){
+  const [mode,setMode]=useState('select');
+  const [scenario,setScenario]=useState(null);
+  const [timerLeft,setTimerLeft]=useState(90*60);
+  const [timerActive,setTimerActive]=useState(false);
+  const [step,setStep]=useState(0);
+  const [answers,setAnswers]=useState({});
+  const timerRef=useRef();
+
+  useEffect(()=>{
+    if(timerActive&&timerLeft>0) timerRef.current=setTimeout(()=>setTimerLeft(t=>t-1),1000);
+    else if(timerLeft===0) setTimerActive(false);
+    return()=>clearTimeout(timerRef.current);
+  },[timerActive,timerLeft]);
+
+  const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  if(mode==='select') return(
+    <div>
+      <div className="section">
+        <div className="sec-label">Practice Engine</div>
+        <h1 className="sec-h">Select <span className="grad-acid">Mode</span></h1>
+        <p style={{color:'var(--t2)',fontSize:14,marginTop:8}}>Three practice modes. Each simulates a real hiring scenario.</p>
+      </div>
+      <div className="g3">
+        {[
+          {id:'scenario',icon:'🏢',title:'Scenario Mode',color:'var(--ice)',
+           desc:'Given a real business crisis or decision problem. You must frame it, ask clarifying questions, design the solution, and recommend action.',
+           format:'Open-ended · No time limit · Business thinking assessed',
+           good:'Consulting rounds, Case study interviews, Strategy roles'},
+          {id:'interview',icon:'⏱',title:'Interview Simulation',color:'var(--acid)',
+           desc:'Full 90-minute timed mock interview. SQL round (30min) + Python round (30min) + Case study (30min). Mirrors real FAANG/top startup screening.',
+           format:'Timed · 90 minutes · 9 questions total',
+           good:'FAANG DS/Analyst screening, Product analytics roles'},
+          {id:'scenario',icon:'💬',title:'Case Walkthrough',color:'var(--gold)',
+           desc:'A data problem presented step by step. You answer each layer before seeing the next. Simulates pair programming / live case interview.',
+           format:'Progressive · Feedback at each step · Guided',
+           good:'Final rounds, Manager interviews, Applied DS roles'},
+        ].map(m=>(
+          <div key={m.id+m.title} className="box p24 pointer box-acid" onClick={()=>setMode(m.id)} style={{borderTop:`3px solid ${m.color}`}}>
+            <div style={{fontSize:32,marginBottom:14}}>{m.icon}</div>
+            <div style={{fontFamily:'var(--fh)',fontSize:22,color:m.color,marginBottom:8}}>{m.title}</div>
+            <p style={{fontSize:13,color:'var(--t1)',lineHeight:1.65,marginBottom:14}}>{m.desc}</p>
+            <div style={{fontSize:11,fontFamily:'var(--fm)',color:'var(--t3)',marginBottom:8}}>{m.format}</div>
+            <div style={{fontSize:11,color:'var(--t2)'}}>Best for: {m.good}</div>
+            <div className="mt16"><button className="btn btn-sm" style={{borderColor:m.color+'55',color:m.color}}>Start →</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if(mode==='scenario') return(
+    <div>
+      <div className="flex ia jb mb20">
+        <div>
+          <div className="sec-label">Scenario Mode</div>
+          <h2 className="sec-h">Business <span className="grad-acid">War Room</span></h2>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setMode('select')}>← Back</button>
+      </div>
+      {!scenario?(
+        <div>
+          <p style={{color:'var(--t2)',fontSize:14,marginBottom:24}}>Choose a scenario. You will be given a real business situation and must respond like a senior DS in a live meeting.</p>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {SCENARIOS.map((s,i)=>(
+              <div key={s.id} className="box p20 pointer box-ice" onClick={()=>{setScenario(s);setStep(0);setAnswers({});}}>
+                <div className="flex ia g12 mb10">
+                  <span className="tag tag-hot">{s.urgency}</span>
+                  <span className="tag tag-ice">{s.company}</span>
+                  <span style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)'}}>{s.role}</span>
+                </div>
+                <div style={{fontSize:14,color:'var(--t1)',lineHeight:1.6}}>{s.context.substring(0,120)}...</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ):(
+        <div>
+          <div className="scenario-box mb20">
+            <div className="scenario-lbl">BUSINESS CONTEXT</div>
+            {scenario.context}
+          </div>
+          <div className="flex ia g8 mb20">
+            <span className="tag tag-hot">{scenario.urgency}</span>
+            <span className="tag tag-ice">{scenario.company}</span>
+            <span style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)'}}>{scenario.role.toUpperCase()}</span>
+          </div>
+          {scenario.questions.map((q,i)=>(
+            <div key={i} className="box p20 mb12" style={{opacity:i>step?0.3:1}}>
+              <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--acid)',letterSpacing:1,marginBottom:10}}>QUESTION {i+1} OF {scenario.questions.length}</div>
+              <div style={{fontSize:15,color:'var(--t0)',marginBottom:i<=step?14:0,fontWeight:500}}>{q}</div>
+              {i<=step&&(
+                <>
+                  <textarea className="input" rows={4} placeholder="Write your answer here. Think like a senior DS — structure your response..." value={answers[i]||''} onChange={e=>setAnswers(a=>({...a,[i]:e.target.value}))} style={{resize:'vertical'}}/>
+                  {i===step&&step<scenario.questions.length-1&&(
+                    <button className="btn btn-acid btn-sm mt12" onClick={()=>setStep(s=>s+1)}>Next Question →</button>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          {step===scenario.questions.length-1&&answers[step]&&(
+            <div className="box p24 mt20" style={{borderColor:'rgba(200,255,0,.2)',background:'rgba(200,255,0,.04)'}}>
+              <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--acid)',letterSpacing:2,marginBottom:16}}>FRAMEWORK & EXPECTED OUTPUT</div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontFamily:'var(--fm)',color:'var(--t3)',marginBottom:6}}>APPROACH</div>
+                <div style={{fontSize:13,color:'var(--t1)',lineHeight:1.6}}>{scenario.framework}</div>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontFamily:'var(--fm)',color:'var(--t3)',marginBottom:6}}>EXPECTED OUTPUT</div>
+                <div style={{fontSize:13,color:'var(--t1)',lineHeight:1.6}}>{scenario.expectedOutput}</div>
+              </div>
+              <button className="btn btn-ghost btn-sm mt16" onClick={()=>setScenario(null)}>Try Another Scenario →</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  if(mode==='interview') return(
+    <div>
+      <div className="flex ia jb mb24">
+        <div><div className="sec-label">Interview Mode</div><h2 className="sec-h">90-Min <span className="grad-acid">Simulation</span></h2></div>
+        <button className="btn btn-ghost btn-sm" onClick={()=>{setMode('select');setTimerLeft(90*60);setTimerActive(false)}}>← Exit</button>
+      </div>
+      {!timerActive&&timerLeft===90*60?(
+        <div style={{textAlign:'center',padding:'60px 40px'}}>
+          <div style={{fontFamily:'var(--fh)',fontSize:80,color:'var(--acid)',marginBottom:20}}>90:00</div>
+          <div style={{fontSize:16,color:'var(--t2)',marginBottom:8}}>SQL Round (30min) + Python Round (30min) + Case Study (30min)</div>
+          <div style={{fontSize:12,fontFamily:'var(--fm)',color:'var(--t3)',marginBottom:40}}>NO PAUSING · NO GOOGLING · SIMULATE REAL CONDITIONS</div>
+          <div className="g3 mb40" style={{maxWidth:600,margin:'0 auto 40px'}}>
+            {[{label:'SQL',n:5,color:'var(--acid)'},{label:'Python',n:3,color:'var(--ice)'},{label:'Case',n:1,color:'var(--gold)'}].map(r=>(
+              <div key={r.label} className="box p20 text-center">
+                <div style={{fontFamily:'var(--fh)',fontSize:36,color:r.color}}>{r.n}</div>
+                <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)',textTransform:'uppercase',letterSpacing:1}}>{r.label} Questions</div>
+              </div>
+            ))}
+          </div>
+          <button className="btn btn-acid btn-lg" onClick={()=>setTimerActive(true)}>START INTERVIEW</button>
+        </div>
+      ):(
+        <div>
+          <div style={{textAlign:'center',marginBottom:32}}>
+            <div className={`big-timer${timerLeft<600?' warn':''}`}>{fmt(timerLeft)}</div>
+            <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--t3)',marginTop:4}}>REMAINING</div>
+          </div>
+          <div className="g3">
+            {['SQL Round','Python Round','Case Study'].map((r,i)=>(
+              <div key={r} className="box p20">
+                <div style={{fontFamily:'var(--fm)',fontSize:9,color:['var(--acid)','var(--ice)','var(--gold)'][i],letterSpacing:2,marginBottom:10}}>{r.toUpperCase()} · {30} MIN</div>
+                <div style={{fontSize:13,color:'var(--t2)',marginBottom:14}}>Answer the assigned questions for this round. Write your SQL/Python, explain your thinking, frame in business terms.</div>
+                <button className="btn btn-sm btn-ghost">Open Questions →</button>
+              </div>
+            ))}
+          </div>
+          <div className="alert alert-ice mt20">
+            <span className="ai">💡</span>
+            <span style={{fontSize:12}}>Full question sets are loaded from your quiz bank. In a complete implementation, each interview mode randomly selects 5 SQL + 3 Python + 1 ML case from the 800+ question bank based on your weak areas.</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+  return null;
+}
+
+/* ── PROJECTS PAGE ── */
+function ProjectsPage({setModal}){
+  const [filter,setFilter]=useState('All');
+  const [expand,setExpand]=useState(null);
+  const cats=['All',...new Set(PROJECTS.map(p=>p.cat))];
+  const shown=filter==='All'?PROJECTS:PROJECTS.filter(p=>p.cat===filter);
+  return(
+    <div>
+      <div className="section">
+        <div className="sec-label">Industry-Grade Systems</div>
+        <h1 className="sec-h">Project <span className="grad-hot">Arsenal</span></h1>
+        <p style={{color:'var(--t2)',fontSize:14,marginTop:8,maxWidth:560}}>15 senior-level projects with full pipelines, failure scenarios, scaling challenges, and what a Staff DS would do differently. None of these are tutorial projects.</p>
+        <div className="alert alert-hot mt16" style={{maxWidth:600}}>
+          <span className="ai">🚫</span>
+          <strong>Zero-tolerance rule:</strong> No Titanic. No Iris. No MNIST. Every project here is a system that could exist in production at a funded company.
+        </div>
+      </div>
+      <div className="flex g8 mb20 wrap">
+        {cats.map(c=><button key={c} className={`btn btn-sm ${filter===c?'btn-acid':'btn-ghost'}`} onClick={()=>setFilter(c)}>{c}</button>)}
+      </div>
+      <div className="g-proj">
+        {shown.map(p=>(
+          <div key={p.id} className="pcard" onClick={()=>setExpand(expand===p.id?null:p.id)}>
+            <div className="pcard-banner" style={{background:p.color}}/>
+            <div className="pcard-body">
+              <div className="flex ia jb mb12">
+                <span style={{fontSize:28}}>{p.emoji}</span>
+                <div className="flex g8">
+                  <span className="tag" style={{borderColor:p.color+'55',color:p.color,background:p.color+'11'}}>{p.tier}</span>
+                  <span className="tag tag-ice">{p.cat}</span>
+                </div>
+              </div>
+              <div style={{fontFamily:'var(--fh)',fontSize:18,marginBottom:8}}>{p.title}</div>
+              <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.6,marginBottom:12}}>{p.biz}</div>
+              <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--acid)',marginBottom:14}}>{p.impact}</div>
+              <div className="flex g6 wrap">
+                {p.stack.slice(0,4).map(s=><span key={s} className="tag tag-acid" style={{fontSize:8}}>{s}</span>)}
+              </div>
+            </div>
+            <div className="pcard-foot">
+              <span style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--t3)'}}>{expand===p.id?'▴ Collapse':'▾ Full Spec'}</span>
+              <button className="btn btn-sm btn-ghost">Open →</button>
+            </div>
+            {expand===p.id&&(
+              <div style={{padding:'24px',borderTop:'1px solid var(--border)',background:'var(--ink)'}}>
+                <div className="g2 mb20">
+                  <div>
+                    <div style={{fontFamily:'var(--fm)',fontSize:9,color:p.color,letterSpacing:2,marginBottom:8}}>PIPELINE</div>
+                    {p.pipeline.map((step,i)=>(
+                      <div key={i} className="flex g10 mb8 ia">
+                        <div style={{width:20,height:20,borderRadius:5,background:`${p.color}22`,color:p.color,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--fm)',fontSize:9,flexShrink:0}}>{i+1}</div>
+                        <div style={{fontSize:12,color:'var(--t1)',lineHeight:1.5}}>{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--hot)',letterSpacing:2,marginBottom:8}}>FAILURE SCENARIOS</div>
+                    <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.6,marginBottom:16}}>{p.failure}</div>
+                    <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--gold)',letterSpacing:2,marginBottom:8}}>SCALING CHALLENGES</div>
+                    <div style={{fontSize:12,color:'var(--t2)',lineHeight:1.6}}>{p.scale}</div>
+                  </div>
+                </div>
+                <div className="box p16" style={{borderColor:'rgba(200,255,0,.15)',background:'rgba(200,255,0,.04)'}}>
+                  <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--acid)',letterSpacing:2,marginBottom:8}}>WHAT A STAFF DS WOULD ADD</div>
+                  <div style={{fontSize:13,color:'var(--t1)',lineHeight:1.6}}>{p.senior}</div>
+                </div>
+                <div style={{marginTop:14,fontSize:11,fontFamily:'var(--fm)',color:'var(--t3)'}}><strong style={{color:'var(--t2)'}}>KEY TRADEOFF:</strong> {p.tradeoff}</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── DEBUG PAGE ── */
+function DebugPage(){
+  const [sel,setSel]=useState(null);
+  const [reveal,setReveal]=useState(false);
+  const [found,setFound]=useState([]);
+  const toggle=(i)=>setFound(f=>f.includes(i)?f.filter(x=>x!==i):[...f,i]);
+  return(
+    <div>
+      <div className="section">
+        <div className="sec-label">Debug Lab</div>
+        <h1 className="sec-h">Fix The <span className="grad-hot">Bug</span></h1>
+        <p style={{color:'var(--t2)',fontSize:14,marginTop:8}}>Broken code. Wrong analysis. Flawed logic. Find the issues before they hit production. Every senior DS has destroyed a production system at least once.</p>
+      </div>
+      {!sel?(
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          {DEBUG_BANK.map((d,i)=>(
+            <div key={d.id} className="box p20 pointer box-hot" onClick={()=>{setSel(d);setReveal(false);setFound([]);}}>
+              <div className="flex ia g10 mb10">
+                <span className="tag tag-hot">{d.type}</span>
+                <span style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)'}}>{d.id}</span>
+              </div>
+              <div style={{fontFamily:'var(--fh)',fontSize:18}}>{d.title}</div>
+              <div style={{fontSize:12,color:'var(--t2)',marginTop:4}}>{d.issues.length} bugs to find</div>
+            </div>
+          ))}
+        </div>
+      ):(
+        <div>
+          <div className="flex ia jb mb20">
+            <div className="flex ia g10">
+              <span className="tag tag-hot">{sel.type}</span>
+              <h2 style={{fontFamily:'var(--fh)',fontSize:22}}>{sel.title}</h2>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setSel(null)}>← Back</button>
+          </div>
+          <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--hot)',letterSpacing:2,marginBottom:8}}>BROKEN CODE — FIND THE BUGS</div>
+          <pre className="code mb20">{sel.broken}</pre>
+          <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--gold)',letterSpacing:2,marginBottom:12}}>WHAT ISSUES CAN YOU IDENTIFY? (SELECT ALL THAT APPLY)</div>
+          {sel.issues.map((issue,i)=>(
+            <div key={i} className="cl-item pointer" onClick={()=>toggle(i)}>
+              <div className={`cl-box${found.includes(i)?' ck':''}`}>{found.includes(i)&&'✓'}</div>
+              <div className={`cl-lbl${!reveal&&found.includes(i)?'':''}`}>{reveal||found.includes(i)?issue:'Click to reveal / confirm this issue'}</div>
+            </div>
+          ))}
+          <div className="flex g12 mt20">
+            <button className="btn btn-hot btn-sm" onClick={()=>setReveal(true)}>Reveal All Issues</button>
+            <button className="btn btn-acid btn-sm" onClick={()=>setReveal(false)}>Hide</button>
+          </div>
+          {reveal&&(
+            <>
+              <div style={{fontFamily:'var(--fm)',fontSize:10,color:'var(--acid)',letterSpacing:2,marginTop:24,marginBottom:8}}>FIXED VERSION</div>
+              <pre className="code mb16">{sel.fixed}</pre>
+              <div className="alert alert-acid">
+                <span className="ai">💡</span>
+                <div><strong>Key Lesson:</strong> {sel.lesson}</div>
+              </div>
+              <button className="btn btn-ghost btn-sm mt16" onClick={()=>setSel(null)}>Next Bug →</button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── PERFORMANCE PAGE ── */
+function PerformancePage({perf,solved,readiness}){
+  const topics=[
+    {key:'sql',label:'SQL',color:'var(--acid)',bank:SQL_BANK},
+    {key:'py',label:'Python',color:'var(--ice)',bank:PYTHON_BANK},
+    {key:'stats',label:'Statistics',color:'var(--gold)',bank:STATS_BANK},
+    {key:'ml',label:'ML',color:'#a78bfa',bank:ML_BANK},
+  ];
+  const totalSolved=Object.values(solved).reduce((a,s)=>a+s.size,0);
+  const totalQ=SQL_BANK.length+PYTHON_BANK.length+STATS_BANK.length+ML_BANK.length;
+  return(
+    <div>
+      <div className="section">
+        <div className="sec-label">Performance Intel</div>
+        <h1 className="sec-h">Skill <span className="grad-acid">Analysis</span></h1>
+        <p style={{color:'var(--t2)',fontSize:14,marginTop:8}}>Track your performance per topic, identify weak areas, and get a personalized priority queue.</p>
+      </div>
+      {/* READINESS SCORE */}
+      <div className="box p24 mb24" style={{borderColor:readiness>75?'rgba(200,255,0,.3)':readiness>50?'rgba(255,194,0,.3)':'rgba(255,61,0,.3)'}}>
+        <div className="flex ia g24">
+          <div style={{textAlign:'center'}}>
+            <div style={{fontFamily:'var(--fh)',fontSize:64,color:readiness>75?'var(--acid)':readiness>50?'var(--gold)':'var(--hot)',lineHeight:1}}>{readiness}%</div>
+            <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)',letterSpacing:2}}>INTERVIEW READINESS</div>
+          </div>
+          <div style={{flex:1}}>
+            <div className="pb" style={{height:8,marginBottom:12}}>
+              <div className="pb-fill" style={{width:readiness+'%',background:readiness>75?'var(--acid)':readiness>50?'var(--gold)':'var(--hot)'}}/>
+            </div>
+            <div style={{fontSize:13,color:'var(--t2)',lineHeight:1.7}}>
+              {readiness<30&&'You\'re just getting started. Focus on SQL and Python fundamentals first. Target 30% before applying anywhere.'}
+              {readiness>=30&&readiness<60&&'Solid foundation. Work through Medium SQL and Python questions. Start building projects. Apply to analyst roles.'}
+              {readiness>=60&&readiness<80&&'Interview-ready for analyst and junior DS roles at product companies. Push Hard questions. Build 2 deployed projects.'}
+              {readiness>=80&&'Top 10% preparation level. Focus on Hard ML questions and failure scenarios. Ready for senior DS/MLE interviews.'}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* PER TOPIC */}
+      <div className="g2 mb24">
+        {topics.map(t=>{
+          const s=perf[t.key];
+          const pct=Math.round(solved[t.key].size/t.bank.length*100);
+          return(
+            <div key={t.key} className="box p20">
+              <div className="flex ia jb mb16">
+                <div style={{fontFamily:'var(--fh)',fontSize:20,color:t.color}}>{t.label}</div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontFamily:'var(--fh)',fontSize:24,color:t.color}}>{pct}%</div>
+                  <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--t3)'}}>{solved[t.key].size}/{t.bank.length} SOLVED</div>
+                </div>
+              </div>
+              <div className="pb mb12" style={{height:5}}><div className="pb-fill" style={{width:pct+'%',background:t.color}}/></div>
+              <div className="g2">
+                <div style={{fontSize:11,color:'var(--t2)'}}>Easy: {t.bank.filter(q=>q.d==='E').length} questions</div>
+                <div style={{fontSize:11,color:'var(--t2)'}}>Medium: {t.bank.filter(q=>q.d==='M').length} questions</div>
+                <div style={{fontSize:11,color:'var(--t2)'}}>Hard: {t.bank.filter(q=>q.d==='H').length} questions</div>
+                <div style={{fontSize:11,color:s.accuracy>75?'var(--acid)':'var(--gold)'}}>Accuracy: {s.accuracy||0}%</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {/* PRIORITY QUEUE */}
+      <div className="box p24">
+        <div style={{fontFamily:'var(--fh)',fontSize:20,marginBottom:20}}>Priority Queue — Do These Next</div>
+        {[
+          {icon:'🔴',label:'SQL Hard: Window Functions + Business Problems',reason:'Appears in 90% of DS interviews at product companies'},
+          {icon:'🟡',label:'Python: Performance Optimization + Memory Management',reason:'Differentiates senior DS from junior analyst'},
+          {icon:'🟢',label:'Stats: A/B Testing Design + Multiple Testing',reason:'Every product DS interview has at least one experiment design question'},
+          {icon:'🔵',label:'ML: Debugging + Production Failures',reason:'Staff DS interview requires MLOps and production thinking'},
+        ].map((item,i)=>(
+          <div key={i} className="flex g12 ia" style={{padding:'12px 0',borderBottom:'1px solid var(--border)'}}>
+            <span style={{fontSize:16,flexShrink:0}}>{item.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,color:'var(--t1)',fontWeight:500}}>{item.label}</div>
+              <div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>{item.reason}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── MODAL ── */
+function Modal({data,onClose,onSolve}){
+  if(!data) return null;
+  if(data.type==='quiz') return <QuizModal data={data} onClose={onClose} onSolve={onSolve}/>;
+  return null;
+}
+
+function QuizModal({data,onClose,onSolve}){
+  const {topic,idx,q}=data;
+  const [sel,setSel]=useState(null);
+  const [submitted,setSubmitted]=useState(false);
+  const submit=(i)=>{if(submitted)return;setSel(i);setSubmitted(true)};
+  const correct=sel===q.ans;
+  const diffMap={E:'Easy',M:'Medium',H:'Hard'};
+  const diffColor={E:'var(--acid)',M:'var(--gold)',H:'var(--hot)'};
+  return(
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mbox">
+        <div className="mhead">
+          <div>
+            <div className="flex ia g8 mb10">
+              <span className="tag" style={{borderColor:diffColor[q.d]+'66',color:diffColor[q.d],background:diffColor[q.d]+'11'}}>{diffMap[q.d]}</span>
+              {q.tags.map(t=><span key={t} style={{fontFamily:'var(--fm)',fontSize:8,color:'var(--t3)',padding:'2px 6px',border:'1px solid var(--border)',borderRadius:2}}>{t}</span>)}
+            </div>
+            <h2 style={{fontFamily:'var(--fh)',fontSize:20}}>{q.t}</h2>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="mbody">
+          <div style={{padding:'16px 18px',background:'var(--ink)',border:'1px solid var(--border)',borderLeft:'3px solid var(--ice)',borderRadius:8,marginBottom:20}}>
+            <div style={{fontFamily:'var(--fm)',fontSize:9,color:'var(--ice)',letterSpacing:2,marginBottom:8}}>QUESTION</div>
+            <div style={{fontSize:14,color:'var(--t0)',lineHeight:1.75}}>{q.q}</div>
+          </div>
+          {q.opts.map((opt,i)=>(
+            <button key={i} className={`qopt${submitted?(i===q.ans?' ok':i===sel&&!correct?' no':' dis'):''}${!submitted?' pointer':''}`} onClick={()=>submit(i)}>
+              <div className="okey">{String.fromCharCode(65+i)}</div>
+              <span style={{flex:1,lineHeight:1.5}}>{opt}</span>
+              {submitted&&i===q.ans&&<span style={{color:'var(--acid)',fontSize:14,flexShrink:0}}>✓</span>}
+            </button>
+          ))}
+          {submitted&&(
+            <div className={`qfb ${correct?'qfb-ok':'qfb-no'}`}>
+              <div style={{fontFamily:'var(--fh)',fontSize:18,color:correct?'var(--acid)':'var(--hot)',marginBottom:8}}>{correct?'CORRECT':'INCORRECT'}</div>
+              <div style={{fontSize:13,color:'var(--t1)',lineHeight:1.7,marginBottom:14}}><strong>Explanation:</strong> {q.exp}</div>
+              <div style={{fontSize:12,color:'var(--t2)',marginBottom:8}}><strong style={{color:'var(--ice)'}}>Approach:</strong> {q.approach}</div>
+              {q.mistakes&&<div style={{fontSize:12,color:'var(--t2)',marginBottom:8}}><strong style={{color:'var(--hot)'}}>Common Mistakes:</strong> {Array.isArray(q.mistakes)?q.mistakes.join(' · '):q.mistakes}</div>}
+              {q.alt&&<div style={{fontSize:12,color:'var(--t2)'}}><strong style={{color:'var(--gold)'}}>Alternative:</strong> {q.alt}</div>}
+              <div className="flex g12 mt16">
+                {correct&&<button className="btn btn-acid btn-sm" onClick={()=>{onSolve&&onSolve(topic,idx,true);onClose();}}>Mark Solved →</button>}
+                {!correct&&<button className="btn btn-hot btn-sm" onClick={()=>{onSolve&&onSolve(topic,idx,false);onClose();}}>Log Attempt</button>}
+                <button className="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const input=document.createElement('style');
+input.textContent=`.input{background:var(--ink3);border:1px solid var(--border);border-radius:7px;padding:10px 14px;color:var(--t0);font-family:var(--fb);font-size:14px;outline:none;width:100%;transition:.2s}.input:focus{border-color:rgba(0,207,255,.4);box-shadow:0 0 0 2px rgba(0,207,255,.08)}.input::placeholder{color:var(--t3)}.text-center{text-align:center}.g6{gap:6px}`;
+document.head.appendChild(input);
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
